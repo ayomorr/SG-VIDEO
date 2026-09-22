@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { addSession } from "@/lib/store";
-import { uuid } from "@/lib/engine/format";
 
 const SETTING_KEY = "scrolldictive.awaytrack.v1";
-/** An away spell shorter than this is noise (quick tab switch, dialog, etc.). */
-const MIN_AWAY_MS = 45_000;
-/** Spells longer than this are probably sleep, not scrolling — don't log them. */
+/** Spells longer than this just show a capped timer — they are never logged. */
 const MAX_AWAY_MS = 2 * 60 * 60_000;
 const LIVE_TICK_MS = 1_000;
 
@@ -28,48 +24,24 @@ export interface AwayTrackerState {
   awayMs: number;
 }
 
-function logAway(startAt: number, endAt: number) {
-  try {
-    addSession({
-      id: `away-${uuid()}`,
-      app: "Other apps",
-      category: "other",
-      startAt,
-      endAt,
-      moodBefore: null,
-      moodAfter: null,
-      note: "Auto-detected: away from Scroll Detect",
-      source: "auto",
-    });
-  } catch {
-    // Storage may be unavailable; non-fatal.
-  }
-}
-
 /**
  * Watches the page lifecycle (`visibilitychange`, `blur`/`focus`,
- * `pagehide`/`pageshow`) and logs a continuous scrolling run whenever the user
- * leaves Scroll Detect for another app and comes back.
- *
- * The web can never name the other app, so the run is logged as "Other apps".
- * Spells under 45s are ignored; spells over 2h are treated as sleep.
+ * `pagehide`/`pageshow`) and reports how long the user was away — it never
+ * guesses that away-time was scrolling. The web can't name the other app, so
+ * Scroll Detect never writes a session from absence: scrolling is only
+ * recorded when the user logs it (log form, live scroll run, or import).
  */
 export function useAwayTracker(): AwayTrackerState {
   const [tracking, setTracking] = useState(true);
   const [awayNow, setAwayNow] = useState(false);
   const [awayMs, setAwayMs] = useState(0);
 
-  const trackingRef = useRef(true);
   const hiddenAtRef = useRef<number | null>(null);
   const firstRef = useRef(false);
 
   useEffect(() => {
     setTracking(loadAwayTracking());
   }, []);
-
-  useEffect(() => {
-    trackingRef.current = tracking;
-  }, [tracking]);
 
   const toggle = () => {
     setTracking((prev) => {
@@ -100,14 +72,8 @@ export function useAwayTracker(): AwayTrackerState {
         if (!firstRef.current) firstRef.current = true;
         return;
       }
-      const endAt = Date.now();
-      const away = endAt - hidden;
       hiddenAtRef.current = null;
       setAwayNow(false);
-
-      if (trackingRef.current && away >= MIN_AWAY_MS && away <= MAX_AWAY_MS) {
-        logAway(hidden, endAt);
-      }
     };
 
     const onVisibility = () => {

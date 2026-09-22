@@ -222,7 +222,6 @@ function LogSessionForm({ onLogged }: { onLogged: () => void }) {
           <input
             type="number"
             min={1}
-            max={600}
             value={minutes}
             onChange={(e) => setMinutes(Number(e.target.value))}
             className={inputClass}
@@ -313,9 +312,6 @@ function OverviewTab({
     d.setHours(0, 0, 0, 0);
     return d.getTime();
   }, []);
-  const autoToday = sessions.filter(
-    (s) => s.source === "auto" && s.startAt >= todayStart,
-  ).length;
 
   const todayList = useMemo(
     () => sessions.filter((s) => s.startAt >= todayStart),
@@ -399,14 +395,9 @@ function OverviewTab({
               </div>
               <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                 {tracker.tracking
-                  ? "When you leave Scroll Detect for another app and come back, the gap is logged as a scrolling run. The web can't name the other app, so it's recorded as \"Other apps\" and feeds detection, insights, and predictions."
-                  : "Automatic tracking is off. Switch it on and the dashboard records every away spell as a scrolling run."}
+                  ? "The away watch is on: it shows how long you were off the app. Away time is never guessed as scrolling — the web can't see other apps, so scrolls are only logged when you record them."
+                  : "The away watch is off. Either way, being away from the app is never counted as scrolling on its own."}
               </p>
-              {autoToday > 0 ? (
-                <p className="mt-2 text-sm font-medium text-primary">
-                  {autoToday} auto-detected run{autoToday === 1 ? "" : "s"} today
-                </p>
-              ) : null}
             </div>
           </div>
           <button

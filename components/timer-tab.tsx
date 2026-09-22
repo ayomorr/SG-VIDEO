@@ -185,6 +185,7 @@ export function TimerTab() {
   const [sound, setSound] = useState(loadSound);
   const [notifState, setNotifState] = useState<NotificationPermission>("default");
   const [custom, setCustom] = useState("");
+  const [finishTime, setFinishTime] = useState("");
   const [warnMin, setWarnMin] = useState(loadWarnMin);
   const [warned, setWarned] = useState(false);
   const finishedRef = useRef(false);
@@ -328,13 +329,30 @@ export function TimerTab() {
     setDurationMs(ms);
     setRemaining(ms);
     setCustom("");
+    setFinishTime("");
     saveDurationPref(ms);
   };
 
   const applyCustom = () => {
     const min = Number(custom);
-    if (!Number.isFinite(min) || min <= 0 || min > 240) return;
+    if (!Number.isFinite(min) || min <= 0) return;
     applyPreset(min);
+  };
+
+  const applyFinishTime = (value: string) => {
+    setFinishTime(value);
+    if (!value) return;
+    const [h, m] = value.split(":").map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return;
+    const target = new Date();
+    target.setHours(h, m, 0, 0);
+    let t = target.getTime();
+    if (t <= Date.now()) t += 24 * 60 * 60_000;
+    const ms = t - Date.now();
+    setDurationMs(ms);
+    setRemaining(ms);
+    setCustom("");
+    saveDurationPref(ms);
   };
 
   const requestNotifs = async () => {
@@ -434,11 +452,24 @@ export function TimerTab() {
                   placeholder="Custom"
                   inputMode="numeric"
                   min={1}
-                  max={240}
                   className="h-10 w-24 rounded-full border border-border bg-background px-4 text-sm text-foreground outline-none transition-colors focus:border-primary/60"
                 />
                 <span className="text-sm text-muted-foreground">m</span>
               </label>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <span className="text-sm text-muted-foreground">or finish by</span>
+              <input
+                type="time"
+                value={finishTime}
+                onChange={(e) => applyFinishTime(e.target.value)}
+                aria-label="Finish the break at a chosen clock time"
+                className="h-10 cursor-pointer rounded-full border border-border bg-background px-4 text-sm tabular-nums text-foreground outline-none transition-colors focus:border-primary/60"
+              />
+              <span className="text-sm text-muted-foreground">
+                → {mmss(durationMs)}
+              </span>
             </div>
 
             {phase === "running" ? (

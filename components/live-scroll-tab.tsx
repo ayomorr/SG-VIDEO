@@ -455,7 +455,6 @@ export function LiveScrollTab({
                 <input
                   type="number"
                   min={5}
-                  max={240}
                   value={customValue}
                   onChange={(e) => setCustomValue(e.target.value)}
                   className="h-10 w-28 rounded-full border border-border bg-card px-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
@@ -466,7 +465,7 @@ export function LiveScrollTab({
                   type="button"
                   onClick={() => {
                     const parsed = Number.parseInt(customValue, 10);
-                    if (Number.isFinite(parsed) && parsed >= 5 && parsed <= 240) {
+                    if (Number.isFinite(parsed) && parsed >= 5) {
                       setGoalMinutes(parsed);
                       setCustomOpen(false);
                     }
