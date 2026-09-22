@@ -1,96 +1,108 @@
 import type { ReactNode } from "react";
-import { BellRing, PauseCircle, PenLine } from "lucide-react";
+import { Brain, ClipboardList, Timer } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { Reveal } from "@/components/reveal";
+import { DoomPhoneMark } from "@/components/logo";
 
-function IntentMock() {
+function LogMock() {
   return (
     <div className="mx-auto w-full max-w-[220px] rounded-2xl border border-border bg-card p-4 shadow-card">
       <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-        Before you open
+        Dashboard · tonight
       </p>
-      <div className="mt-3 rounded-xl bg-muted px-3 py-2.5 text-xs text-foreground">
-        "Quick scroll - funny posts"
-      </div>
-      <div className="mt-2 flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground">I came for</span>
+      <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-muted px-3 py-2.5">
+        <DoomPhoneMark className="h-7 w-7" />
+        <div className="flex-1">
+          <p className="text-xs font-medium text-foreground">A social app</p>
+          <p className="text-[10px] text-muted-foreground">22 min · 9:41p – 10:03p</p>
+        </div>
         <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
-          10 min
+          Logged
         </span>
+      </div>
+      <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+        <span>Feeling before: so-so</span>
+        <span>After: drained</span>
       </div>
     </div>
   );
 }
 
-function NudgeMock() {
+function InsightMock() {
   return (
     <div className="mx-auto w-full max-w-[220px] rounded-2xl border border-border bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-lavender/15 text-lavender">
-          <BellRing className="h-3.5 w-3.5" aria-hidden="true" />
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+          Latest run
+        </p>
+        <span className="rounded-full bg-lavender/15 px-2 py-0.5 text-[10px] font-semibold text-lavender">
+          Drifting
         </span>
-        <p className="text-xs font-semibold text-foreground">Still valuable?</p>
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-        You are 80% into your 10 minutes.
+      <p className="mt-3 text-xs leading-relaxed text-foreground">
+        You scroll longest in the 9–11p window, usually after work stress.
       </p>
-      <div className="mt-3 flex gap-2">
-        <span className="flex-1 rounded-full bg-muted px-2 py-1.5 text-center text-[10px] font-medium text-foreground">
-          One more minute
-        </span>
-        <span className="flex-1 rounded-full bg-primary px-2 py-1.5 text-center text-[10px] font-semibold text-primary-foreground">
-          I am good
-        </span>
+      <div className="mt-3 rounded-xl bg-muted px-3 py-2.5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Risk prediction
+        </p>
+        <p className="mt-1 text-xs text-foreground">
+          High risk Thu 8–10pm · 72% chance of a long run
+        </p>
       </div>
     </div>
   );
 }
 
-function PauseMock() {
+function TimerMock() {
   return (
     <div className="mx-auto w-full max-w-[220px] rounded-2xl border border-border bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary">
-          <PauseCircle className="h-3.5 w-3.5" aria-hidden="true" />
-        </span>
-        <p className="text-xs font-semibold text-foreground">Time to land.</p>
-      </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-        You set your limit and you kept it. Nice.
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+        Break timer
       </p>
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div className="h-full w-0 rounded-full bg-primary" />
+      <p className="mt-3 text-center font-heading text-3xl font-semibold tabular-nums tracking-tight text-foreground">
+        07:42
+      </p>
+      <div className="mt-3 space-y-1.5 rounded-xl bg-muted px-3 py-2.5 text-[10px] text-muted-foreground">
+        <p className="flex justify-between">
+          <span>Alarm</span>
+          <span className="font-medium text-foreground">10:07 pm</span>
+        </p>
+        <p className="flex justify-between">
+          <span>Heads-up before end</span>
+          <span className="font-medium text-foreground">09:52 pm</span>
+        </p>
       </div>
     </div>
   );
 }
 
 const steps: {
-  icon: typeof PenLine;
+  icon: typeof Brain;
   title: string;
   caption: string;
   mock: () => ReactNode;
 }[] = [
   {
-    icon: PenLine,
-    title: "Set your intent",
+    icon: ClipboardList,
+    title: "Log your scroll",
     caption:
-      "Before an app opens, name why you are here. 'A quick look' or 'Ten minutes, I promise.' Now the timer knows your goal too.",
-    mock: () => <IntentMock />,
+      "Two taps in the dashboard — the app, the minutes, how it left you. There's no background scanner; you decide what counts.",
+    mock: () => <LogMock />,
   },
   {
-    icon: BellRing,
-    title: "Get a gentle nudge",
+    icon: Brain,
+    title: "Spot the pattern",
     caption:
-      "When you are 80% in, Scroll Guard asks the only question that matters: 'Still valuable?' One tap answers honestly.",
-    mock: () => <NudgeMock />,
+      "On-device analysis scores every run, explains the why in insights, and predicts your riskiest hours before you reach them.",
+    mock: () => <InsightMock />,
   },
   {
-    icon: PauseCircle,
-    title: "Auto-pause and move on",
+    icon: Timer,
+    title: "Take a real break",
     caption:
-      "At your limit the feed rests and the phone returns to you. Not blocked, not punished - just a breath before you decide.",
-    mock: () => <PauseMock />,
+      "Set a countdown that heads-up you before the end and rings when it's done — an alarm for stepping away, not a block.",
+    mock: () => <TimerMock />,
   },
 ];
 
@@ -100,8 +112,8 @@ export function HowItWorks() {
       <div className="container">
         <SectionHeading
           eyebrow="How it works"
-          title="Three small choices. One calmer feed."
-          description="No guilt trips, no willpower workouts. Scroll Guard steps in gently, at exactly the moments that matter."
+          title="Three quiet steps. One clearer feed."
+          description="No background tracking, no blocks. Scroll Detect shows you your pattern and lets you act on it."
         />
 
         <div className="relative grid gap-6 md:grid-cols-3">

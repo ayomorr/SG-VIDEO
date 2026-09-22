@@ -51,7 +51,14 @@ function render(name, size, glyphScale) {
   console.log("wrote", name, png.length, "bytes");
 }
 
+function writeSvg() {
+  const svg = iconSvg(512, 0.95);
+  writeFileSync(path.join(OUT, "icon.svg"), svg);
+  console.log("wrote icon.svg", svg.length, "bytes");
+}
+
 render("icon-192.png", 192, 0.95);
 render("icon-512.png", 512, 0.95);
 render("icon-maskable-512.png", 512, 0.72);
 render("apple-touch-icon-180.png", 180, 0.95);
+writeSvg();

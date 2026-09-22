@@ -10,27 +10,27 @@ import { Reveal } from "@/components/reveal";
 const faqs = [
   {
     q: "Is my data really private?",
-    a: "Yes. Everything — your limits, your streaks, your quiet hours — lives on your device only. Scroll Guard has no account system, no analytics, and nothing that phones home. If we can't see your data, neither can anyone else.",
+    a: "Your sessions, insights, timers, and coach history live in your browser's local storage on your device — Scroll Detect has no account system and no server database of your scrolling. The only thing that can leave your device is the optional AI Coach: if you configure an AI provider key, a short anonymous summary of your week is sent to that provider. That feature is off by default.",
   },
   {
-    q: "Will Scroll Guard block my apps?",
-    a: "No, and that's on purpose. Scroll Guard pauses — it never blocks, locks, or punishes. When a limit ends, the app takes a breath and hands the decision back to you. A coach, not a warden.",
+    q: "Will Scroll Detect block my apps?",
+    a: "It can't, and it doesn't try. A website can't pause or lock other apps on your phone. Instead it makes your own scrolling visible — patterns, triggers, predictions, an honest coach — and leaves every decision to you. No blocking, no locks, no punishment.",
   },
   {
     q: "Does it drain my battery?",
-    a: "Barely. Scroll Guard doesn't run a background scanner. It's a lightweight countdown engine that checks in only when an app you've set a limit on opens — most days that's less than 1% of your battery.",
+    a: "It's a web app, not a background scanner. It only runs while you have the dashboard or the break timer open in a tab, and all the counting is lightweight. When it's closed, it uses nothing.",
   },
   {
     q: "Which platforms are supported?",
-    a: "Scroll Guard runs on iOS 15+ and Android 8+. iPhone and Android phones are both first-class citizens. Watch and desktop versions are on the roadmap.",
+    a: "Any modern browser. It installs as a Progressive Web App from Android Chrome or iOS Safari (iOS 16.4+, which also gives you notifications) — no App Store or Play Store needed. Wrapping it in native iOS/Android apps is on the roadmap.",
   },
   {
-    q: "Is Scroll Guard really free?",
-    a: "Completely. No free trial countdown, no subscription, no paywall hiding the useful features. It's free to download and free to keep using, forever. If we ever add optional extras, the basics stay free.",
+    q: "Is Scroll Detect really free?",
+    a: "Yes. Right now there's no account, no subscription, and nothing to pay for. If optional extras are ever added, the core stays free.",
   },
   {
     q: "Where is my data stored?",
-    a: "On your phone. Full stop. We don't run a Scroll Guard server for your data, so there's nothing to store. You can export your streaks anytime — they're yours to keep and take wherever you like.",
+    a: "In your browser's local storage on your device. We don't run a server that stores your sessions, so there's nothing to hand over. You can reset or clear all of it from the dashboard's data controls at any time.",
   },
 ];
 
@@ -41,7 +41,7 @@ export function Faq() {
         <SectionHeading
           eyebrow="FAQ"
           title="Questions people actually ask."
-          description="Short answers, no fine print. Anything else? Write to hello@scrollguard.app."
+          description="Straight answers about how this PWA really works — no fine print, no store promises."
         />
 
         <Reveal>

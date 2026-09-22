@@ -3,45 +3,39 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  AlarmClock,
   BellRing,
-  Check,
   ChevronLeft,
   ChevronRight,
   Pause,
   Play,
+  Plus,
 } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { Reveal } from "@/components/reveal";
+import { DoomPhoneMark } from "@/components/logo";
 import { cn } from "@/lib/utils";
-
-const FEED_BLOCKS = [
-  { w: "w-3/4", h: "h-2" },
-  { w: "w-1/2", h: "h-2" },
-  { w: "w-full", h: "h-14" },
-  { w: "w-2/3", h: "h-2" },
-  { w: "w-full", h: "h-10" },
-];
 
 const stepCopy = [
   {
-    label: "Set your timer",
+    label: "Log a session",
     description:
-      "Scroll Guard starts a gentle countdown the moment the app opens. No alarms, just a quiet clock.",
+      "Two taps in the dashboard — the app, the minutes, how it left you. There's no background scanner; you decide what counts.",
   },
   {
-    label: "Get the nudge",
+    label: "Spot the pattern",
     description:
-      "At 80%, one question appears: 'Still valuable?' Answer with a tap.",
+      "Detection scores the run, insights explain the why, and predictions flag your riskiest hours before you reach them.",
   },
   {
-    label: "Auto-pause",
+    label: "Set a break timer",
     description:
-      "At zero, the feed gently tops out. You choose the next move.",
+      "A real countdown with a heads-up before the end. Go stretch, make tea — the timer keeps the appointment for you.",
   },
   {
-    label: "Done",
+    label: "It rings. You decide.",
     description:
-      "You set it down. Scroll Guard counts the win and moves on to your real life.",
+      "The alarm fires whether you're in the tab or not. Step away, or keep going — the choice stays yours.",
   },
 ];
 
@@ -62,39 +56,80 @@ function StatusBar() {
 function AppChip() {
   return (
     <div className="flex items-center gap-2.5 px-4">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-focus to-lavender text-xs font-bold text-white">
-        IG
-      </span>
+      <DoomPhoneMark className="h-9 w-9" />
       <div className="flex-1">
-        <p className="text-xs font-medium text-foreground">Instagram</p>
-        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div className="h-full w-[70%] rounded-full bg-primary" />
-        </div>
+        <p className="text-xs font-medium text-foreground">Scroll Detect</p>
+        <p className="text-[10px] text-muted-foreground">Tonight · 2 sessions</p>
       </div>
     </div>
   );
 }
 
-function FeedSkeleton() {
+function ScreenLog() {
   return (
-    <div className="flex flex-col gap-2.5 px-4 pt-3" aria-hidden="true">
-      {FEED_BLOCKS.map((block, i) => (
-        <div
-          key={i}
-          className={cn(
-            "animate-pulse rounded-full bg-muted-foreground/15",
-            block.w,
-            block.h,
-          )}
-        />
-      ))}
+    <div className="flex flex-col gap-4 px-4 pb-8 pt-4">
+      <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-card p-3.5">
+        <DoomPhoneMark className="h-9 w-9" />
+        <div className="flex-1">
+          <p className="text-xs font-medium text-foreground">A social app</p>
+          <p className="text-[10px] text-muted-foreground">22 min · 9:41p – 10:03p</p>
+        </div>
+        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+          Logged
+        </span>
+      </div>
+      <div className="rounded-2xl bg-muted px-4 py-3 text-[11px] text-muted-foreground">
+        Feeling before: so-so · after: drained
+      </div>
+      <div className="flex items-center gap-2 rounded-2xl border border-dashed border-border px-4 py-3 text-[11px] font-medium text-muted-foreground">
+        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        Add another session
+      </div>
+      <div className="mt-auto flex justify-center gap-1.5" aria-hidden="true">
+        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+      </div>
     </div>
   );
 }
 
-function ScreenTimer() {
+function ScreenInsight() {
   return (
-    <div className="flex flex-col items-center gap-5 px-4 pb-8 pt-6">
+    <div className="flex flex-col gap-4 px-4 pb-8 pt-4">
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+            Latest run
+          </p>
+          <span className="rounded-full bg-lavender/15 px-2 py-0.5 text-[10px] font-semibold text-lavender">
+            Drifting
+          </span>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-foreground">
+          You scroll longest in the 9–11p window, usually after work stress.
+        </p>
+      </div>
+      <div className="rounded-2xl bg-muted px-4 py-3.5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Risk prediction
+        </p>
+        <p className="mt-1 text-xs text-foreground">
+          High risk Thu 8–10pm · 72% chance of a long run
+        </p>
+      </div>
+      <div className="rounded-2xl border border-teal/25 bg-teal/5 px-4 py-3 text-[11px] text-foreground">
+        Insight: late-night scrolls push you to Spiral. Set a break timer before
+        you reach the feed.
+      </div>
+    </div>
+  );
+}
+
+function ScreenBreak() {
+  return (
+    <div className="flex flex-col items-center gap-5 px-4 pb-8 pt-5">
       <div
         className="relative h-40 w-40 rounded-full"
         style={{
@@ -107,109 +142,58 @@ function ScreenTimer() {
             07:42
           </span>
           <span className="text-[11px] font-medium text-muted-foreground">
-            of 10 min
+            break
           </span>
         </div>
       </div>
-      <div className="w-full rounded-2xl bg-muted px-4 py-3 text-center text-xs text-foreground">
-        Intent: "Quick scroll - funny posts"
-      </div>
-      <div className="flex justify-center gap-2" aria-hidden="true">
-        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
-        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
-        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
-      </div>
-    </div>
-  );
-}
-
-function ScreenNudge() {
-  return (
-    <div className="relative px-0 pb-8 pt-2">
-      <div className="sticky top-0 z-10 px-4 pb-2 pt-4">
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lavender/15 text-lavender">
-              <BellRing className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <p className="text-sm font-semibold text-foreground">
-              Still valuable?
-            </p>
-          </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            You are 80% into your 10 minutes.
-          </p>
-          <div className="mt-3 flex gap-2">
-            <span className="flex-1 rounded-full bg-muted px-2 py-1.5 text-center text-[11px] font-medium text-foreground">
-              One more minute
-            </span>
-            <span className="flex-1 rounded-full bg-primary px-2 py-1.5 text-center text-[11px] font-semibold text-primary-foreground">
-              I am good
-            </span>
-          </div>
-        </div>
-      </div>
-      <FeedSkeleton />
-    </div>
-  );
-}
-
-function ScreenPause() {
-  return (
-    <div className="relative px-0 pb-8">
-      <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-[2px]" />
-      <div className="relative z-20 flex flex-col items-center gap-4 px-6 pb-6 pt-14">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-          <svg className="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 1.2c3.4 1.4 6.5 2 8.1 2.3v6c0 5-3.9 8.4-8.1 10.2C5.8 17.9 1.9 14.5 1.9 9.5v-6C3.5 3.2 6.6 2.6 10 1.2Z" />
-            <path d="M7.4 4.8h5.2L10 7.3l-2.6-2.5Zm-.1 5h5.4L10 12.4l-2.7-2.6Z" fill="#0B1B2B" />
-          </svg>
-        </span>
-        <p className="font-heading text-xl font-semibold text-foreground">
-          Time to land.
+      <div className="w-full space-y-1.5 rounded-2xl bg-muted px-4 py-3 text-[11px] text-muted-foreground">
+        <p className="flex justify-between">
+          <span>Alarm</span>
+          <span className="font-medium text-foreground">10:07 pm</span>
         </p>
-        <p className="-mt-2 text-center text-xs leading-relaxed text-muted-foreground">
-          You set a limit and you kept it. The feed can wait.
+        <p className="flex justify-between">
+          <span>Heads-up before end</span>
+          <span className="font-medium text-foreground">09:52 pm</span>
         </p>
-        <div className="mt-1 w-full space-y-2">
-          <div className="w-full rounded-full bg-primary py-2.5 text-center text-[11px] font-semibold text-primary-foreground">
-            Close app and go
-          </div>
-          <div className="w-full rounded-full bg-muted py-2.5 text-center text-[11px] font-medium text-foreground">
-            +5 quiet minutes (once)
-          </div>
-        </div>
       </div>
-      <FeedSkeleton />
+      <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <BellRing className="h-3.5 w-3.5 text-lavender" aria-hidden="true" />
+        Rings even if this tab is closed
+      </p>
     </div>
   );
 }
 
-function ScreenDone() {
+function ScreenRing() {
   return (
     <div className="flex flex-col items-center gap-4 px-6 pb-8 pt-14 text-center">
       <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
-        <span className="absolute inset-0 rounded-full border border-primary/30 animate-ping" style={{ animationDuration: "3s" }} />
-        <Check className="h-8 w-8 text-primary" aria-hidden="true" />
+        <span
+          className="absolute inset-0 rounded-full border border-primary/30 animate-ping"
+          style={{ animationDuration: "3s" }}
+        />
+        <AlarmClock className="h-8 w-8 text-primary" aria-hidden="true" />
       </span>
       <p className="font-heading text-xl font-semibold text-foreground">
-        You set it down.
+        Break&apos;s over.
       </p>
-      <div className="w-full rounded-2xl bg-muted px-4 py-3">
-        <p className="text-xs text-muted-foreground">Tonight's scroll</p>
-        <p className="mt-0.5 font-heading text-lg font-semibold text-foreground">
-          10 min - streak 12
-        </p>
+      <p className="-mt-2 max-w-[220px] text-center text-xs leading-relaxed text-muted-foreground">
+        You stepped away on purpose. Stretch, sip some water, and decide what&apos;s
+        next on your terms.
+      </p>
+      <div className="mt-1 w-full space-y-2">
+        <div className="w-full rounded-full bg-primary py-2.5 text-center text-[11px] font-semibold text-primary-foreground">
+          Okay, back to it
+        </div>
+        <div className="w-full rounded-full bg-muted py-2.5 text-center text-[11px] font-medium text-foreground">
+          +5 more quiet minutes
+        </div>
       </div>
-      <p className="text-[11px] text-muted-foreground">
-        That's an hour more for you. Enjoy it.
-      </p>
     </div>
   );
 }
 
-const screens = [ScreenTimer, ScreenNudge, ScreenPause, ScreenDone];
+const screens = [ScreenLog, ScreenInsight, ScreenBreak, ScreenRing];
 
 export function LiveDemo() {
   const [index, setIndex] = useState(0);
@@ -231,8 +215,8 @@ export function LiveDemo() {
       <div className="container">
         <SectionHeading
           eyebrow="Live demo"
-          title="See it happen, start to finish."
-          description="Click the phone or tap through - this is exactly how a Scroll Guard session feels."
+          title="See the real flow, start to finish."
+          description="Click the phone or tap through - this is exactly what your Scroll Detect dashboard does, with the demo data."
         />
 
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
@@ -265,6 +249,7 @@ export function LiveDemo() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -18, scale: 0.99 }}
                       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                      className="flex min-h-[400px] flex-col"
                     >
                       <Screen />
                     </motion.div>

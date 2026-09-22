@@ -1,7 +1,5 @@
-const CACHE = "scroll-guard-v1";
-const NAV_CACHE = "scroll-guard-nav-v1";
-const ASSET_TYPES = new Set(["image", "font", "style", "script"]);
-
+const CACHE = "scrolldictive-v1";
+const NAV_CACHE = "scrolldictive-nav-v1";
 self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
@@ -16,6 +14,12 @@ self.addEventListener("activate", (event) => {
       await self.clients.claim();
     })(),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -53,12 +57,12 @@ async function staleWhileRevalidate(request) {
 
   const update = fetch(request)
     .then((fresh) => {
-      if (fresh.ok && ASSET_TYPES.has(fresh.type)) cache.put(request, fresh.clone());
+      if (fresh.ok) cache.put(request, fresh.clone());
       return fresh;
     })
     .catch(() => null);
 
-  if (cached && ASSET_TYPES.has(cached.type)) return cached;
+  if (cached) return cached;
   const fresh = await update;
   if (fresh) return fresh;
   return cached || Response.error();

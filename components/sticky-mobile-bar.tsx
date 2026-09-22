@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
-
-const label = "Download";
+import { InstallButton } from "@/components/install-button";
 
 export function StickyMobileBar() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -16,9 +16,11 @@ export function StickyMobileBar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const hidden = pathname === "/app";
+
   return (
     <AnimatePresence>
-      {visible ? (
+      {!hidden && visible ? (
         <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -30,19 +32,13 @@ export function StickyMobileBar() {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-heading text-sm font-semibold text-foreground">
-                  Get Scroll Guard
+                  Get Scroll Detect
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Free · No ads · Private by design
                 </p>
               </div>
-              <a
-                href="#download"
-                className="inline-flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow-[0_10px_30px_-8px_rgba(0,194,168,0.5)] transition-transform active:scale-95"
-              >
-                {label}
-                <ArrowDown className="h-4 w-4" aria-hidden="true" />
-              </a>
+              <InstallButton size="md" placement="top" />
             </div>
           </div>
         </motion.div>

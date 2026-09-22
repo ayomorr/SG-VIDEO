@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { InstallButton } from "@/components/install-button";
 import { siteConfig } from "@/lib/site";
 import { cn } from "@/lib/utils";
-
-const ctaLabel = "Download";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -35,7 +33,7 @@ export function Navbar() {
           <a
             href="#top"
             className="flex items-center gap-2 rounded-full focus-visible:outline-2"
-            aria-label="Scroll Guard home"
+            aria-label="Scroll Detect home"
           >
             <Logo iconClass="h-8 w-8" />
           </a>
@@ -55,12 +53,9 @@ export function Navbar() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button asChild size="sm" className="hidden sm:inline-flex">
-              <a href="#download">
-            {ctaLabel}
-            <ArrowDown className="h-4 w-4" aria-hidden="true" />
-          </a>
-            </Button>
+            <div className="hidden sm:block">
+              <InstallButton size="sm" />
+            </div>
             <button
               type="button"
               aria-label={open ? "Close menu" : "Open menu"}
@@ -95,11 +90,7 @@ export function Navbar() {
                   </li>
                 ))}
                 <li className="pt-2">
-                  <Button asChild size="lg" className="w-full">
-                    <a href="#download" onClick={() => setOpen(false)}>
-                      {ctaLabel}
-                    </a>
-                  </Button>
+                  <InstallButton size="lg" fullWidth />
                 </li>
               </ul>
             </motion.div>

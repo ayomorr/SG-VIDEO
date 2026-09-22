@@ -1,50 +1,50 @@
 import {
-  BellRing,
-  Flame,
-  Hourglass,
-  MoonStar,
-  PauseCircle,
+  Brain,
+  CalendarClock,
+  ClipboardList,
+  Radar,
   ShieldCheck,
+  Timer,
 } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { Reveal } from "@/components/reveal";
 
 const features = [
   {
-    icon: Hourglass,
-    title: "Per-app limits",
+    icon: ClipboardList,
+    title: "Self-tracked scrolls",
     description:
-      "Instagram: 20 minutes. X: 15. Duolingo: unlimited. Separate clocks for separate vices - you set them per app.",
+      "No background scanner. You log a session in two taps — the app, the minutes, how it left you — and everything downstream runs on that honest data.",
   },
   {
-    icon: BellRing,
-    title: "Smart nudge",
+    icon: Radar,
+    title: "Doom-scroll detection",
     description:
-      "A quiet 'Still valuable?' at 80% in. The check-in is one tap, honest, and never pushy about it.",
+      "Every logged run is scored from Calm to Spiral, with a single line on what's happening and one thing to try next.",
   },
   {
-    icon: PauseCircle,
-    title: "Auto-pause",
+    icon: CalendarClock,
+    title: "Risk predictions",
     description:
-      "When your limit hits zero, the feed rests. Not a block, not a wall - a soft stop you get to choose what to do with.",
+      "From your own history, Scroll Detect predicts your riskiest hours for a long run — so you can spot them coming.",
   },
   {
-    icon: MoonStar,
-    title: "Quiet hours",
+    icon: Brain,
+    title: "Trigger insight",
     description:
-      "After 10pm the screen dims and slows. Sleep gets the late shift; the feed gets the morning.",
+      "It finds what links your spirals — late nights, certain apps, a mood — and surfaces the journal of your habits.",
   },
   {
-    icon: Flame,
-    title: "Streaks",
+    icon: Timer,
+    title: "Break timer with alarm",
     description:
-      "Nights you put the phone down on time, logged and celebrated. Consistency, not perfection.",
+      "Set a focused break for any length. It heads-up you before the end, then rings — your alarm for stepping away.",
   },
   {
     icon: ShieldCheck,
     title: "On-device privacy",
     description:
-      "Everything stays on your phone. No account, no tracking, no middleman. Your scroll is nobody's business but yours.",
+      "Everything lives in your browser's storage on your device. No account, no tracking, no data sent anywhere.",
   },
 ];
 
@@ -54,8 +54,8 @@ export function Features() {
       <div className="container">
         <SectionHeading
           eyebrow="Features"
-          title="Everything you need to scroll on your own terms."
-          description="Small, calm tools that stack into one big change. Designed to be felt, not noticed."
+          title="Built around your real scrolling, not a fantasy of lockdown."
+          description="Small, quiet tools that add up over time. Designed to feel helpful, not heavy."
         />
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

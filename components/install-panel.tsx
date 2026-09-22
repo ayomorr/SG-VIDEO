@@ -5,36 +5,53 @@ import { Download, Info, MonitorCheck } from "lucide-react";
 
 type PromptEvent = Event & { prompt: () => Promise<void> };
 
-const steps = [
-  "Open the address-bar menu (the \u22EE / Share icon in Chrome, Edge, or Safari).",
-  'Choose "Install Scroll Guard" or "Add to Dock".',
-  "It opens as its own app — and keeps working offline.",
+const androidSteps = [
+  "Open the address bar menu in Chrome or Edge.",
+  'Choose "Install app" or "Add to Home screen".',
+  "Approve the prompt and launch Scroll Detect like a native app.",
+];
+
+const iPhoneSteps = [
+  "Open this page in Safari on your iPhone.",
+  'Tap the Share button and choose "Add to Home Screen".',
+  "Tap Add and use Scroll Detect from your home screen.",
 ];
 
 export function InstallPanel({ headline = "Prefers a laptop?" }: { headline?: string }) {
   const [installEvent, setInstallEvent] = useState<PromptEvent | null>(null);
   const [open, setOpen] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
+    const platform = navigator.platform || "";
+    const userAgent = navigator.userAgent || "";
+    const appleDevice = /iPhone|iPad|iPod/.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    setIsIOS(appleDevice);
+
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setInstallEvent(e as PromptEvent);
     };
     const onInstalled = () => setInstallEvent(null);
+
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
+
     return () => {
       window.removeEventListener("beforeinstallprompt", onPrompt);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
 
+  const steps = isIOS ? iPhoneSteps : androidSteps;
+
   const install = async () => {
     if (installEvent) {
       await installEvent.prompt();
-    } else {
-      setOpen((v) => !v);
+      return;
     }
+
+    setOpen((v) => !v);
   };
 
   return (
@@ -46,15 +63,15 @@ export function InstallPanel({ headline = "Prefers a laptop?" }: { headline?: st
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground">{headline}</p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            Scroll Guard installs as an app on Windows, macOS and Linux too — and
-            keeps your streaks even offline.
+            Install Scroll Detect as an app on desktop or mobile. It opens faster, stays
+            offline, and keeps your focus without the App Store friction.
           </p>
           <button
             type="button"
             onClick={install}
             className="mt-3 inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow-[0_10px_30px_-8px_rgba(0,194,168,0.5)] transition-transform active:scale-95"
           >
-            {installEvent ? "Install Scroll Guard" : open ? "Hide steps" : "How to install"}
+            {installEvent ? "Install Scroll Detect" : open ? "Hide steps" : isIOS ? "Add to Home Screen" : "How to install"}
             {installEvent ? (
               <Download className="h-4 w-4" aria-hidden="true" />
             ) : (

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, Home } from "lucide-react";
-import { LogoMark } from "@/components/logo";
+import { DoomPhoneMark } from "@/components/logo";
 import { DownloadButtons } from "@/components/download-buttons";
 import { QRCode } from "@/components/qr-code";
 import { EmailCapture } from "@/components/email-capture";
@@ -59,10 +59,10 @@ export function DownloadPageClient() {
         aria-hidden="true"
       />
 
-      <LogoMark className="h-16 w-16" />
+      <DoomPhoneMark className="h-16 w-16" />
 
       <h1 className="mt-6 text-center font-heading text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-        Get Scroll Guard
+        Get Scroll Detect
       </h1>
       <p className="mt-4 max-w-xl text-center text-base leading-relaxed text-muted-foreground md:text-lg">
         {redirecting && storeName

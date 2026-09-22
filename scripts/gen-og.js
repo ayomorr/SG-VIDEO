@@ -37,7 +37,7 @@ const svg = `
   <circle cx="180" cy="620" r="340" fill="url(#blobLav)"/>
 
   <g font-family="Poppins">
-    <text x="88" y="130" font-size="24" font-weight="600" fill="#00C2A8" letter-spacing="8">SCROLL GUARD</text>
+    <text x="88" y="130" font-size="24" font-weight="600" fill="#00C2A8" letter-spacing="8">SCROLL DETECT</text>
 
     <text x="86" y="232" font-size="78" font-weight="600" fill="#F7F9FC" letter-spacing="-2">Scroll smarter.</text>
     <text x="86" y="326" font-size="78" font-weight="600" fill="#F7F9FC" letter-spacing="-2">Live more.</text>
@@ -54,7 +54,7 @@ const svg = `
     <rect x="1020" y="290" width="34" height="20" fill="#0B1B2B"/>
     <rect x="987" y="314" width="100" height="66" rx="40" fill="#0B1B2B"/>
     <rect x="918" y="424" width="238" height="46" rx="23" fill="#F7F9FC"/>
-    <text x="1037" y="457" font-family="Poppins" font-size="20" font-weight="600" fill="#062018" text-anchor="middle">scrollguard.app</text>
+    <text x="1037" y="457" font-family="Poppins" font-size="20" font-weight="600" fill="#062018" text-anchor="middle">scrolldictive.app</text>
   </g>
 </svg>
 `;

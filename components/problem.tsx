@@ -4,27 +4,34 @@ import { Reveal } from "@/components/reveal";
 import { Card } from "@/components/ui/card";
 import { Counter } from "@/components/counter";
 
-const stats = [
+const stats: {
+  icon: typeof Smartphone;
+  value?: number;
+  suffix?: string;
+  time?: boolean;
+  headline?: string;
+  label: string;
+  source?: string;
+}[] = [
   {
     icon: Smartphone,
-    value: 6.9666,
-    time: true,
-    label: "of daily screen time goes to autopilot scrolling",
-    source: "Global median, 2025",
+    value: 15,
+    suffix: " days",
+    label: "of every year go to autopilot scrolling — if a scroll takes just an hour a day.",
+    source: "Simple arithmetic: 1 hour × 365",
   },
   {
     icon: CalendarX2,
-    value: 112,
+    value: 152,
     suffix: " days",
-    label: "of your life drifting away to the feed every decade",
-    source: "Computed from average session length",
+    label: "of every decade slip away the same way — a little over five full months, counting only one hour a day.",
+    source: "Simple arithmetic: 1 hour × 3,650",
   },
   {
     icon: MoonStar,
-    value: 39,
-    suffix: "%",
-    label: "of adults say late-night scrolling pushes their sleep back",
-    source: "Sleep & screens survey, 2025",
+    headline: "After 11pm, it gets worse.",
+    label: "Late-night scrolls run longest and hit sleep hardest — a pattern your own log will show you faster than any survey.",
+    source: "See it in your dashboard after a week",
   },
 ];
 
@@ -38,7 +45,7 @@ export function Problem() {
       <div className="container">
         <SectionHeading
           eyebrow="The problem"
-          title="Nobody plans to scroll for two hours."
+          title="It starts with one quick check."
           description="Dopamine doesn't have a chime. So we fall in, look up, and wonder where the evening went. You're not weak — the feed is just very good at its job."
         />
 
@@ -55,18 +62,26 @@ export function Problem() {
                     aria-hidden="true"
                   />
                 </div>
-                <p className="font-heading text-5xl font-semibold tracking-tight text-foreground">
-                  <Counter to={stat.value} time={stat.time} />
-                  {stat.suffix ? (
-                    <span className="text-3xl text-coral">{stat.suffix}</span>
-                  ) : null}
-                </p>
+                {stat.value !== undefined ? (
+                  <p className="font-heading text-5xl font-semibold tracking-tight text-foreground">
+                    <Counter to={stat.value} time={stat.time} />
+                    {stat.suffix ? (
+                      <span className="text-3xl text-coral">{stat.suffix}</span>
+                    ) : null}
+                  </p>
+                ) : (
+                  <p className="font-heading text-3xl font-semibold tracking-tight text-foreground">
+                    {stat.headline}
+                  </p>
+                )}
                 <p className="-mt-2 leading-relaxed text-muted-foreground">
                   {stat.label}
                 </p>
-                <p className="mt-auto text-xs uppercase tracking-wider text-muted-foreground/70">
-                  {stat.source}
-                </p>
+                {stat.source ? (
+                  <p className="mt-auto text-xs uppercase tracking-wider text-muted-foreground/70">
+                    {stat.source}
+                  </p>
+                ) : null}
               </Card>
             </Reveal>
           ))}

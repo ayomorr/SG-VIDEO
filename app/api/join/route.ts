@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Add a valid email." }, { status: 400 });
   }
 
-  console.info(`[scroll-guard] ${intent} signup: ${email}`);
+  console.info(`[scroll-detect] ${intent} signup: ${email}`);
 
   return NextResponse.json({ ok: true, intent }, { status: 200 });
 }

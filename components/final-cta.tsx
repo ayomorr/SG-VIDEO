@@ -1,7 +1,7 @@
-import { DownloadButtons } from "@/components/download-buttons";
-import { QRCode } from "@/components/qr-code";
+import Link from "next/link";
+import { LayoutDashboard, Sparkles } from "lucide-react";
+import { InstallButton } from "@/components/install-button";
 import { Reveal } from "@/components/reveal";
-import { siteConfig } from "@/lib/site";
 
 export function FinalCta() {
   return (
@@ -24,16 +24,23 @@ export function FinalCta() {
                 Your evenings are waiting.
               </p>
               <p className="max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
-                One download. A few honest limits. A week from now, your phone
-                won't be running your nights.
+                Install Scroll Detect from any browser — no App Store, no account.
+                A dashboard, a coach, and a break timer that give your focus back.
               </p>
-              <DownloadButtons className="justify-center" />
-              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:gap-6">
-                <QRCode size={120} caption="Or scan to get it" />
-                <p className="max-w-[200px] pb-1 text-left text-xs leading-relaxed text-white/75">
-                  {siteConfig.storeMeta.price}
-                </p>
+              <div className="flex flex-col items-center gap-3 sm:flex-row">
+                <InstallButton />
+                <Link
+                  href="/app"
+                  className="inline-flex h-14 items-center gap-2 rounded-full border border-white/30 px-8 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                >
+                  <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+                  Open the AI dashboard
+                </Link>
               </div>
+              <p className="flex items-center gap-1.5 text-xs text-white/60">
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                No store. No account. No ads.
+              </p>
             </div>
           </div>
         </Reveal>

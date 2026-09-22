@@ -7,11 +7,10 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
-import { ArrowDown, Check, PlayCircle } from "lucide-react";
+import { ArrowDown, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PhoneMockup } from "@/components/phone-mockup";
-
-const primaryLabel = "Download the app";
+import { InstallButton } from "@/components/install-button";
 
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
@@ -54,7 +53,7 @@ export function Hero() {
             >
               <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-soft" aria-hidden="true" />
-                Anti-doomscrolling, zero quitting required
+                Gentle support for the evenings you actually want back
               </span>
 
               <h1 className="font-heading text-[clamp(2.6rem,6vw,4.2rem)] font-semibold leading-[1.05] tracking-tight text-foreground">
@@ -63,15 +62,13 @@ export function Hero() {
               </h1>
 
               <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-                Scroll Guard gives your evenings back — without quitting the
-                apps you love. Set an intention, get a gentle nudge, and let a
-                quiet timer do the remembering for you.
+                Scroll Detect helps you take back your evenings without leaving
+                the apps you love. Set an intention, get a gentle nudge, and let
+                a quiet timer do the remembering for you.
               </p>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Button asChild size="xl">
-                  <a href="/download">{primaryLabel}</a>
-                </Button>
+                <InstallButton />
                 <Button asChild size="xl" variant="outline">
                   <a href="#how">
                     <PlayCircle className="h-5 w-5" aria-hidden="true" />
@@ -79,20 +76,6 @@ export function Hero() {
                   </a>
                 </Button>
               </div>
-
-              <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                {["Free to start", "iOS & Android", "Private by design"].map(
-                  (item) => (
-                    <li key={item} className="flex items-center gap-2">
-                      <Check
-                        className="h-4 w-4 text-primary"
-                        aria-hidden="true"
-                      />
-                      {item}
-                    </li>
-                  ),
-                )}
-              </ul>
 
               <a
                 href="#problem"
