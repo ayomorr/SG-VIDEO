@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Download, Info, MonitorCheck } from "lucide-react";
-
-type PromptEvent = Event & { prompt: () => Promise<void> };
+import { useState } from "react";
+import { Download, Info, MonitorCheck, ArrowRight } from "lucide-react";
+import { useInstallState } from "@/lib/hooks/use-install-state";
 
 const androidSteps = [
   "Open the address bar menu in Chrome or Edge.",
@@ -18,30 +17,11 @@ const iPhoneSteps = [
 ];
 
 export function InstallPanel({ headline = "Prefers a laptop?" }: { headline?: string }) {
-  const [installEvent, setInstallEvent] = useState<PromptEvent | null>(null);
+  const { installEvent, installed } = useInstallState();
   const [open, setOpen] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-
-  useEffect(() => {
-    const platform = navigator.platform || "";
-    const userAgent = navigator.userAgent || "";
-    const appleDevice = /iPhone|iPad|iPod/.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    setIsIOS(appleDevice);
-
-    const onPrompt = (e: Event) => {
-      e.preventDefault();
-      setInstallEvent(e as PromptEvent);
-    };
-    const onInstalled = () => setInstallEvent(null);
-
-    window.addEventListener("beforeinstallprompt", onPrompt);
-    window.addEventListener("appinstalled", onInstalled);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onPrompt);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
-  }, []);
+  const isIOS =
+    /iPhone|iPad|iPod/.test(navigator.userAgent || "") ||
+    ((navigator.platform || "") === "MacIntel" && navigator.maxTouchPoints > 1);
 
   const steps = isIOS ? iPhoneSteps : androidSteps;
 
@@ -53,6 +33,31 @@ export function InstallPanel({ headline = "Prefers a laptop?" }: { headline?: st
 
     setOpen((v) => !v);
   };
+
+  if (installed) {
+    return (
+      <div className="hidden rounded-2xl border border-border/80 bg-card/60 p-5 md:block">
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+            <MonitorCheck className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">Already installed</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Scroll Detect is on your device. Jump straight into your sessions.
+            </p>
+            <a
+              href="/app"
+              className="mt-3 inline-flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow-[0_10px_30px_-8px_rgba(0,194,168,0.5)] transition-transform active:scale-95"
+            >
+              Open the app
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="hidden rounded-2xl border border-border/80 bg-card/60 p-5 md:block">

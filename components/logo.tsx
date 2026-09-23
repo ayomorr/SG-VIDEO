@@ -20,23 +20,58 @@ export function LogoMark({ className }: { className?: string }) {
         </linearGradient>
       </defs>
       <rect x="6" y="6" width="52" height="52" rx="16" fill="#0B1B2B" />
-      <path
-        d={SPIRAL_PATH}
+      <rect
+        x="20.5"
+        y="8"
+        width="23"
+        height="48"
+        rx="6.5"
+        fill="#0B1B2B"
         stroke="url(#sd-mark)"
-        strokeWidth="4.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeWidth="2"
       />
-      <circle cx="32" cy="42.5" r="2.4" fill="url(#sd-mark)" />
+      <rect
+        x="23.5"
+        y="12.5"
+        width="17"
+        height="39"
+        rx="3.5"
+        fill="#101F30"
+      />
       <path
-        d="M19.5 20.5 Q32 10.5 44.5 20.5 Q32 31.5 19.5 20.5 Z"
-        stroke="#F7F9FC"
-        strokeWidth="3.5"
+        d="M32 20 V26"
+        stroke="url(#sd-mark)"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M27.5 25.5 L32 30.5 L36.5 25.5"
+        stroke="url(#sd-mark)"
+        strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.95"
+        fill="none"
       />
-      <circle cx="32" cy="21" r="2.8" fill="url(#sd-mark)" />
+      <circle cx="32" cy="36.2" r="2.2" fill="url(#sd-mark)" />
+      <circle cx="32" cy="44.5" r="6" fill="#071321" />
+      <circle
+        cx="32"
+        cy="44.5"
+        r="6"
+        stroke="url(#sd-mark)"
+        strokeWidth="2"
+        fill="none"
+        opacity="0.9"
+      />
+      <rect
+        x="29.25"
+        y="14.75"
+        width="5.5"
+        height="2"
+        rx="1"
+        fill="#F7F9FC"
+        fillOpacity="0.85"
+      />
     </svg>
   );
 }

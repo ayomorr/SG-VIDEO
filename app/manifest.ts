@@ -6,8 +6,8 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Scroll Detect",
     description:
       "Scroll Detect helps you keep the evening you actually wanted. Log your own scrolling, learn what drags you into a spiral, and let a break timer do the remembering.",
-    id: "/",
-    start_url: "/",
+    id: "/app",
+    start_url: "/app",
     scope: "/",
     display: "standalone",
     display_override: ["window-controls-overlay", "standalone"],

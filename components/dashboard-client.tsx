@@ -5,9 +5,11 @@ import {
   Activity,
   AlertTriangle,
   BarChart3,
+  BellRing,
   Brain,
   CalendarClock,
   CheckCircle2,
+  ClipboardList,
   Clock,
   Coffee,
   Info,
@@ -15,10 +17,12 @@ import {
   MessageCircle,
   Moon,
   Plus,
+  Radar,
   RefreshCw,
   Rss,
   Send,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   Target,
   Timer,
@@ -59,6 +63,7 @@ import { buildContextSummary } from "@/lib/engine/coach";
 import { formatDuration, formatHour, percent } from "@/lib/engine/format";
 import { useAwayTracker } from "@/lib/hooks/use-away-tracker";
 import type { AwayTrackerState } from "@/lib/hooks/use-away-tracker";
+import { useBreakTimer } from "@/lib/hooks/use-break-timer";
 import { importSessionsFromQuery } from "@/lib/import-sessions";
 import { TimerTab } from "@/components/timer-tab";
 import { LiveScrollTab } from "@/components/live-scroll-tab";
@@ -73,14 +78,106 @@ type TabId =
   | "timer"
   | "live";
 
-const TABS: { id: TabId; label: string; icon: typeof Activity }[] = [
-  { id: "overview", label: "Overview", icon: Activity },
-  { id: "insights", label: "Insights", icon: Lightbulb },
-  { id: "predict", label: "Predict", icon: CalendarClock },
-  { id: "triggers", label: "Triggers", icon: Brain },
-  { id: "coach", label: "Coach", icon: MessageCircle },
-  { id: "timer", label: "Break timer", icon: Timer },
-  { id: "live", label: "Live scroll", icon: Rss },
+const TABS: {
+  id: TabId;
+  label: string;
+  icon: typeof Activity;
+  blurb: string;
+  featured?: boolean;
+}[] = [
+  {
+    id: "timer",
+    label: "Break timer",
+    icon: Timer,
+    featured: true,
+    blurb: "Set a break first, then go scroll. This is the main tool: start it before any scroll — the alarm rings to pull you back.",
+  },
+  {
+    id: "overview",
+    label: "Overview",
+    icon: Activity,
+    blurb: "Your day at a glance: total sessions, time logged, per-app breakdown and the loop watch.",
+  },
+  {
+    id: "insights",
+    label: "Insights",
+    icon: Lightbulb,
+    blurb: "Patterns found in your own data: peak hours, longest stretches and high-pull apps.",
+  },
+  {
+    id: "predict",
+    label: "Predict",
+    icon: CalendarClock,
+    blurb: "Foresees your riskiest hours for a long run, so you can set a break before they hit.",
+  },
+  {
+    id: "triggers",
+    label: "Triggers",
+    icon: Brain,
+    blurb: "Connects the mood before a session with how it ends, and suggests what to do instead.",
+  },
+  {
+    id: "coach",
+    label: "Coach",
+    icon: MessageCircle,
+    blurb: "An honest companion that answers questions using your own history.",
+  },
+  {
+    id: "live",
+    label: "Live scroll",
+    icon: Rss,
+    blurb: "Real-time detection while you scroll in-app: catch drifting before it becomes a spiral.",
+  },
+];
+
+const CAPABILITIES: {
+  icon: typeof Activity;
+  title: string;
+  description: string;
+  tab: TabId | null;
+}[] = [
+  {
+    icon: ClipboardList,
+    title: "Self-tracked scrolls",
+    description:
+      "No background scanner. Log a session in two taps — the app, the minutes, how it left you — and everything runs on that honest data.",
+    tab: "triggers",
+  },
+  {
+    icon: Radar,
+    title: "Doom-scroll detection",
+    description:
+      "Every logged run is scored from Calm to Spiral, with a single line on what's happening and one thing to try next.",
+    tab: "overview",
+  },
+  {
+    icon: CalendarClock,
+    title: "Risk predictions",
+    description:
+      "From your own history, Scroll Detect predicts your riskiest hours for a long run — so you can spot them coming.",
+    tab: "predict",
+  },
+  {
+    icon: Brain,
+    title: "Trigger insight",
+    description:
+      "It finds what links your spirals — late nights, certain apps, a mood — and surfaces the journal of your habits.",
+    tab: "insights",
+  },
+  {
+    icon: Timer,
+    title: "Break timer with alarm",
+    description:
+      "Set a focused break for any length. It heads-up you before the end, then rings — your alarm for stepping away.",
+    tab: "timer",
+  },
+  {
+    icon: ShieldCheck,
+    title: "On-device privacy",
+    description:
+      "Everything lives in your browser's storage on your device. No account, no tracking, no data sent anywhere.",
+    tab: null,
+  },
 ];
 
 const SEVERITY_STYLES: Record<Severity, string> = {
@@ -167,16 +264,20 @@ function SeverityBadge({ severity }: { severity: Severity }) {
 
 function LogSessionForm({ onLogged }: { onLogged: () => void }) {
   const [app, setApp] = useState(APP_CATALOG[0].name);
+  const [days, setDays] = useState(0);
+  const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(20);
   const [moodBefore, setMoodBefore] = useState<Mood | "">("");
   const [moodAfter, setMoodAfter] = useState<Mood | "">("");
   const [note, setNote] = useState("");
 
+  const totalMinutes = Math.max(1, days * 1440 + hours * 60 + minutes);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const def = APP_CATALOG.find((a) => a.name === app) ?? APP_CATALOG[0];
     const now = Date.now();
-    const startAt = now - Math.max(1, minutes) * 60_000;
+    const startAt = now - totalMinutes * 60_000;
     addSession({
       id: `m-${now}-${Math.random().toString(36).slice(2, 8)}`,
       app: def.name,
@@ -188,6 +289,8 @@ function LogSessionForm({ onLogged }: { onLogged: () => void }) {
       note: note.trim() || undefined,
       source: "manual",
     });
+    setDays(0);
+    setHours(0);
     setMinutes(20);
     setMoodBefore("");
     setMoodAfter("");
@@ -215,18 +318,45 @@ function LogSessionForm({ onLogged }: { onLogged: () => void }) {
             ))}
           </select>
         </label>
-        <label className="block">
+        <div>
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Duration (minutes)
+            Duration
           </span>
-          <input
-            type="number"
-            min={1}
-            value={minutes}
-            onChange={(e) => setMinutes(Number(e.target.value))}
-            className={inputClass}
-          />
-        </label>
+          <div className="grid grid-cols-3 gap-2">
+            <label className="block">
+              <input
+                type="number"
+                min={0}
+                value={days}
+                onChange={(e) => setDays(Math.max(0, Number(e.target.value)))}
+                className={cn(inputClass, "rounded-r-none border-r-0")}
+              />
+            </label>
+            <label className="block">
+              <input
+                type="number"
+                min={0}
+                value={hours}
+                onChange={(e) => setHours(Math.max(0, Number(e.target.value)))}
+                className={cn(inputClass, "rounded-none border-r-0")}
+              />
+            </label>
+            <label className="block">
+              <input
+                type="number"
+                min={0}
+                value={minutes}
+                onChange={(e) => setMinutes(Math.max(0, Number(e.target.value)))}
+                className={cn(inputClass, "rounded-l-none")}
+              />
+            </label>
+          </div>
+          <div className="mt-1.5 grid grid-cols-3 gap-2 text-[11px] font-medium text-muted-foreground">
+            <span className="text-left">days</span>
+            <span className="text-center">h</span>
+            <span className="text-right">min</span>
+          </div>
+        </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
@@ -776,15 +906,61 @@ function TriggersTab({ sessions }: { sessions: Session[] }) {
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
-      <Card>
-        <div className="mb-4 flex items-center gap-2">
-          <Plus className="h-4 w-4 text-primary" aria-hidden="true" />
-          <h3 className="font-heading text-base font-semibold text-foreground">
-            Log a session
-          </h3>
-        </div>
-        <LogSessionForm onLogged={() => setRefresh((v) => v + 1)} />
-      </Card>
+      <div className="flex flex-col gap-5">
+        <Card>
+          <div className="mb-4 flex items-center gap-2">
+            <Plus className="h-4 w-4 text-primary" aria-hidden="true" />
+            <h3 className="font-heading text-base font-semibold text-foreground">
+              Log a session
+            </h3>
+          </div>
+          <LogSessionForm onLogged={() => setRefresh((v) => v + 1)} />
+        </Card>
+
+        {journal.length > 0 ? (
+          <Card>
+            <h3 className="font-heading text-base font-semibold text-foreground">
+              Journal
+            </h3>
+            <ul className="mt-4 grid gap-2 md:grid-cols-1">
+              {journal.slice(0, 12).map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex items-start justify-between gap-3 rounded-xl border border-border/70 bg-background/50 p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">
+                      {MOOD_LABELS[entry.moodBefore]} → {entry.app} →{" "}
+                      {formatDuration(entry.durationMs)}
+                      {entry.moodAfter ? ` → ${MOOD_LABELS[entry.moodAfter]}` : ""}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {new Date(entry.createdAt).toLocaleString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                      {entry.note ? ` · ${entry.note}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      deleteSession(entry.id);
+                      setRefresh((v) => v + 1);
+                    }}
+                    aria-label="Delete entry"
+                    className="shrink-0 cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-coral/10 hover:text-coral"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : null}
+      </div>
 
       <div className="flex flex-col gap-5">
         {triggers.length > 0 ? (
@@ -848,49 +1024,6 @@ function TriggersTab({ sessions }: { sessions: Session[] }) {
         ) : null}
       </div>
 
-      {journal.length > 0 ? (
-        <Card className="lg:col-span-2">
-          <h3 className="font-heading text-base font-semibold text-foreground">
-            Journal
-          </h3>
-          <ul className="mt-4 grid gap-2 md:grid-cols-2">
-            {journal.slice(0, 12).map((entry) => (
-              <li
-                key={entry.id}
-                className="flex items-start justify-between gap-3 rounded-xl border border-border/70 bg-background/50 p-3"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">
-                    {MOOD_LABELS[entry.moodBefore]} → {entry.app} →{" "}
-                    {formatDuration(entry.durationMs)}
-                    {entry.moodAfter ? ` → ${MOOD_LABELS[entry.moodAfter]}` : ""}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {new Date(entry.createdAt).toLocaleString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                    {entry.note ? ` · ${entry.note}` : ""}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    deleteSession(entry.id);
-                    setRefresh((v) => v + 1);
-                  }}
-                  aria-label="Delete entry"
-                  className="shrink-0 cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-coral/10 hover:text-coral"
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
       <span className="hidden">{refresh}</span>
     </div>
   );
@@ -1095,8 +1228,9 @@ function CoachTab({ sessions, initialMessage }: { sessions: Session[]; initialMe
 
 export function DashboardClient() {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [tab, setTab] = useState<TabId>("overview");
+  const [tab, setTab] = useState<TabId | null>("timer");
   const [hydrated, setHydrated] = useState(false);
+  const timer = useBreakTimer();
   const [importNotice, setImportNotice] = useState<{ imported: number } | null>(
     null,
   );
@@ -1205,6 +1339,41 @@ export function DashboardClient() {
 
         {!hydrated ? null : (
           <>
+            {timer.phase === "running" && timer.warned ? (
+              <div className="mt-8 flex flex-col gap-3 rounded-2xl border border-amber/40 bg-amber/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <BellRing className="h-5 w-5 shrink-0 text-amber" aria-hidden="true" />
+                  <p className="text-sm leading-relaxed text-foreground">
+                    Heads-up — your break has {timer.warnMin} min left.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTab("timer")}
+                  className="shrink-0 cursor-pointer rounded-full bg-amber/20 px-4 py-2 text-sm font-semibold text-amber transition-colors hover:bg-amber/30"
+                >
+                  Open timer
+                </button>
+              </div>
+            ) : null}
+            {timer.phase === "done" ? (
+              <div className="mt-8 flex flex-col gap-3 rounded-2xl border border-coral/40 bg-coral/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <BellRing className="h-5 w-5 shrink-0 text-coral" aria-hidden="true" />
+                  <p className="text-sm leading-relaxed text-foreground">
+                    Break&apos;s over. You beat the feed — go see the result.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTab("timer")}
+                  className="shrink-0 cursor-pointer rounded-full bg-coral/20 px-4 py-2 text-sm font-semibold text-coral transition-colors hover:bg-coral/30"
+                >
+                  See the result
+                </button>
+              </div>
+            ) : null}
+
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               {[
                 {
@@ -1241,36 +1410,89 @@ export function DashboardClient() {
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-2">
-              {TABS.map(({ id, label, icon: Icon }) => (
+              {TABS.map(({ id, label, icon: Icon, featured }) => (
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setTab(id)}
+                  onClick={() => setTab((cur) => (cur === id ? null : id))}
                   className={cn(
-                    "inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border px-5 text-sm font-medium transition-all",
-                    tab === id
-                      ? "border-primary/40 bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                    "inline-flex cursor-pointer items-center gap-2 rounded-full border transition-all",
+                    featured
+                      ? cn(
+                          "h-14 px-7 text-base font-bold tracking-tight shadow-lg",
+                          tab === id
+                            ? "scale-[1.06] border-primary bg-gradient-to-r from-primary to-[#2D6CDF] text-primary-foreground shadow-primary/30"
+                            : "border-primary bg-primary/10 text-primary shadow-primary/10",
+                        )
+                      : cn(
+                          "h-11 px-5 text-sm font-medium",
+                          tab === id
+                            ? "border-primary/40 bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                        ),
                   )}
                 >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <Icon
+                    className={cn("h-4 w-4", featured && "h-5 w-5")}
+                    aria-hidden="true"
+                  />
                   {label}
                 </button>
               ))}
             </div>
 
+            <p
+              key={tab ?? "none"}
+              className="mt-4 max-w-2xl animate-fade-in text-sm leading-relaxed text-muted-foreground"
+            >
+              {tab
+                ? TABS.find((t) => t.id === tab)?.blurb
+                : "Everything in one place. Tap a card to open it — tap the active one again to close it."}
+            </p>
+
             <div className="mt-6">
-              {tab === "overview" ? (
-                <OverviewTab sessions={sessions} tracker={tracker} />
-              ) : null}
-              {tab === "insights" ? <InsightsTab sessions={sessions} /> : null}
-              {tab === "predict" ? <PredictTab sessions={sessions} /> : null}
-              {tab === "triggers" ? <TriggersTab sessions={sessions} /> : null}
-              {tab === "coach" ? <CoachTab sessions={sessions} /> : null}
-              {tab === "timer" ? <TimerTab /> : null}
-              {tab === "live" ? (
-                <LiveScrollTab onGoToTimer={() => setTab("timer")} />
-              ) : null}
+              {tab ? (
+                <>
+                  {tab === "overview" ? (
+                    <OverviewTab sessions={sessions} tracker={tracker} />
+                  ) : null}
+                  {tab === "insights" ? <InsightsTab sessions={sessions} /> : null}
+                  {tab === "predict" ? <PredictTab sessions={sessions} /> : null}
+                  {tab === "triggers" ? <TriggersTab sessions={sessions} /> : null}
+                  {tab === "coach" ? <CoachTab sessions={sessions} /> : null}
+                  {tab === "timer" ? <TimerTab timer={timer} /> : null}
+                  {tab === "live" ? (
+                    <LiveScrollTab onGoToTimer={() => setTab("timer")} />
+                  ) : null}
+                </>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {CAPABILITIES.map((cap) => (
+                    <button
+                      key={cap.title}
+                      type="button"
+                      disabled={cap.tab === null}
+                      onClick={() => cap.tab && setTab(cap.tab)}
+                      className={cn(
+                        "group flex h-full flex-col gap-3 rounded-2xl border bg-card/70 p-6 text-left shadow-card transition-all",
+                        cap.tab
+                          ? "cursor-pointer hover:-translate-y-1 hover:border-primary/40 hover:shadow-glow-teal"
+                          : "cursor-default",
+                      )}
+                    >
+                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                        <cap.icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <h3 className="font-heading text-base font-semibold text-foreground">
+                        {cap.title}
+                      </h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {cap.description}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         )}

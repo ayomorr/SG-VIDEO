@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Download, Info } from "lucide-react";
+import { Download, Info, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ButtonSize } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useInstallState } from "@/lib/hooks/use-install-state";
 
-type PromptEvent = Event & { prompt: () => Promise<void> };
 type Placement = "bottom" | "top";
 
 const androidSteps = [
@@ -33,32 +33,11 @@ export function InstallButton({
   fullWidth?: boolean;
   placement?: Placement;
 }) {
-  const [installEvent, setInstallEvent] = useState<PromptEvent | null>(null);
+  const { installEvent, installed } = useInstallState();
   const [open, setOpen] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-
-  useEffect(() => {
-    const platform = navigator.platform || "";
-    const userAgent = navigator.userAgent || "";
-    const appleDevice =
-      /iPhone|iPad|iPod/.test(userAgent) ||
-      (platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    setIsIOS(appleDevice);
-
-    const onPrompt = (e: Event) => {
-      e.preventDefault();
-      setInstallEvent(e as PromptEvent);
-    };
-    const onInstalled = () => setInstallEvent(null);
-
-    window.addEventListener("beforeinstallprompt", onPrompt);
-    window.addEventListener("appinstalled", onInstalled);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onPrompt);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
-  }, []);
+  const isIOS =
+    /iPhone|iPad|iPod/.test(navigator.userAgent || "") ||
+    ((navigator.platform || "") === "MacIntel" && navigator.maxTouchPoints > 1);
 
   const steps = isIOS ? iPhoneSteps : androidSteps;
 
@@ -69,6 +48,17 @@ export function InstallButton({
     }
     setOpen((v) => !v);
   };
+
+  if (installed) {
+    return (
+      <Button size={size} asChild className={cn(fullWidth && "w-full")}>
+        <a href="/app">
+          Open the app
+          <ArrowRight className="h-5 w-5" aria-hidden="true" />
+        </a>
+      </Button>
+    );
+  }
 
   const label = installEvent
     ? "Install Scroll Detect"

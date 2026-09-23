@@ -4,40 +4,16 @@ import { siteConfig } from "@/lib/site";
 
 const columns = [
   {
-    title: "Product",
-    links: [
-      { label: "How it works", href: "#how" },
-      { label: "Features", href: "#features" },
-      { label: "Live demo", href: "#demo" },
-      { label: "AI dashboard", href: "/app" },
-      { label: "Download", href: "/download" },
-    ],
+    title: "Get started",
+    links: [{ label: "AI app dashboard", href: "/app" }],
   },
   {
-    title: "Company",
-    links: [
-      { label: "About", href: "#top" },
-      { label: "Blog", href: "#top" },
-      { label: "Contact", href: `mailto:${siteConfig.email}` },
-      { label: "Careers", href: "#top" },
-    ],
+    title: "Learn",
+    links: [{ label: "How it works", href: "#how" }, { label: "FAQ", href: "#faq" }],
   },
   {
-    title: "Legal",
-    links: [
-      { label: "Privacy", href: "#top" },
-      { label: "Terms", href: "#top" },
-      { label: "Cookies", href: "#top" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { label: "FAQ", href: "#faq" },
-      { label: "Help center", href: "#faq" },
-      { label: "Download", href: "/download" },
-      { label: "Status", href: "#top" },
-    ],
+    title: "Contact",
+    links: [{ label: "Email us", href: `mailto:${siteConfig.email}` }],
   },
 ];
 
@@ -60,7 +36,7 @@ export function Footer() {
 
           <nav
             aria-label="Footer"
-            className="grid grid-cols-2 gap-8 sm:grid-cols-4"
+            className="grid grid-cols-2 gap-8 sm:grid-cols-3"
           >
             {columns.map((column) => (
               <div key={column.title}>

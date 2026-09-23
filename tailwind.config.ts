@@ -65,6 +65,11 @@ const config: Config = {
           dim: "#B84A3F",
           soft: "#46201C",
         },
+        amber: {
+          DEFAULT: "#F5A623",
+          dim: "#B8790F",
+          soft: "#3D2E0C",
+        },
         cloud: "#F7F9FC",
         lavender: {
           DEFAULT: "#A79CFF",
@@ -137,6 +142,10 @@ const config: Config = {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(100%)" },
         },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(4px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -156,6 +165,7 @@ const config: Config = {
         dim: "dim 7s ease-in-out infinite",
         breathe: "breathe 14s ease-in-out infinite",
         shimmer: "shimmer 2.6s linear infinite",
+        "fade-in": "fade-in 0.4s ease-out",
       },
       transitionTimingFunction: {
         out: "cubic-bezier(0.22, 1, 0.36, 1)",

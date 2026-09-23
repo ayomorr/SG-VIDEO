@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { LayoutDashboard, Sparkles } from "lucide-react";
-import { InstallButton } from "@/components/install-button";
+import { Sparkles } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 
 export function FinalCta() {
@@ -27,16 +25,6 @@ export function FinalCta() {
                 Install Scroll Detect from any browser — no App Store, no account.
                 A dashboard, a coach, and a break timer that give your focus back.
               </p>
-              <div className="flex flex-col items-center gap-3 sm:flex-row">
-                <InstallButton />
-                <Link
-                  href="/app"
-                  className="inline-flex h-14 items-center gap-2 rounded-full border border-white/30 px-8 text-sm font-medium text-white transition-colors hover:bg-white/10"
-                >
-                  <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
-                  Open the AI dashboard
-                </Link>
-              </div>
               <p className="flex items-center gap-1.5 text-xs text-white/60">
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
                 No store. No account. No ads.
