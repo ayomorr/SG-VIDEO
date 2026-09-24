@@ -14,7 +14,7 @@ type Variant =
 type Size = "sm" | "md" | "lg" | "xl";
 
 const base =
-  "inline-flex cursor-pointer select-none items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-all duration-300 ease-out focus-visible:outline-2";
+  "inline-flex cursor-pointer select-none items-center justify-center gap-2 whitespace-nowrap rounded-full font-bold transition-all duration-300 ease-out focus-visible:outline-2";
 
 const variants: Record<Variant, string> = {
   primary:
@@ -31,10 +31,10 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-4 text-sm",
-  md: "h-11 px-6 text-sm",
-  lg: "h-12 px-7 text-base",
-  xl: "h-14 px-8 text-base",
+  sm: "h-11 px-6 text-[15px]",
+  md: "h-14 px-8 text-base",
+  lg: "h-16 px-10 text-lg",
+  xl: "h-20 px-14 text-xl",
 };
 
 export interface ButtonProps

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { InstallButton } from "@/components/install-button";
+import { InstallButton } from "@/components/marketing/install-button";
 
 export function StickyMobileBar() {
   const pathname = usePathname();

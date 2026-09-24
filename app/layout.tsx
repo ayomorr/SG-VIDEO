@@ -1,9 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { StickyMobileBar } from "@/components/sticky-mobile-bar";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
 
@@ -132,10 +129,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <Providers>
-          <Navbar />
           <main id="main">{children}</main>
-          <Footer />
-          <StickyMobileBar />
         </Providers>
         <script
           type="application/ld+json"

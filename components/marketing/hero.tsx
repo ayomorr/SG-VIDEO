@@ -9,7 +9,7 @@ import {
 } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { InstallButton } from "@/components/install-button";
+import { InstallButton } from "@/components/marketing/install-button";
 
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);

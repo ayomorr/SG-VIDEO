@@ -65,8 +65,8 @@ import { useAwayTracker } from "@/lib/hooks/use-away-tracker";
 import type { AwayTrackerState } from "@/lib/hooks/use-away-tracker";
 import { useBreakTimer } from "@/lib/hooks/use-break-timer";
 import { importSessionsFromQuery } from "@/lib/import-sessions";
-import { TimerTab } from "@/components/timer-tab";
-import { LiveScrollTab } from "@/components/live-scroll-tab";
+import { TimerTab } from "@/components/dashboard/timer-tab";
+import { LiveScrollTab } from "@/components/dashboard/live-scroll-tab";
 import { DoomPhoneMark } from "@/components/logo";
 
 type TabId =
@@ -1270,7 +1270,7 @@ export function DashboardClient() {
               : "calm";
 
   return (
-    <main className="relative min-h-screen overflow-hidden pb-40 pt-24 md:pt-32">
+    <div className="relative min-h-screen overflow-hidden pb-40 pt-24 md:pt-32">
       <div
         className="absolute -right-40 top-10 h-96 w-96 rounded-full bg-teal/15 blur-[120px]"
         aria-hidden="true"
@@ -1497,6 +1497,6 @@ export function DashboardClient() {
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }

@@ -21,14 +21,19 @@ Everything about a user's browsing history stays out of the server. Sessions, in
 
 ```
 app/
-  page.tsx              Landing page (Hero → How it works → FAQ → CTA)
-  app/page.tsx          The dashboard UI (the PWA)
-  layout.tsx            Root layout, fonts, SEO + JSON-LD
-  manifest.ts           Web App Manifest
+  (site)/               Landing page group (Hero → How it works → FAQ → CTA)
+    page.tsx            Homepage
+    layout.tsx          Marketing chrome (navbar, footer, sticky install bar)
+  app/page.tsx          The dashboard UI (the PWA), isolated from marketing chrome
   api/
     coach/route.ts      POST — coach chat reply (LLM if configured, else rules engine)
     join/route.ts       POST — early-access signup (validates email)
-components/             Landing + dashboard components (ui/ holds primitives)
+  layout.tsx            Root layout: fonts, theme providers, SEO + JSON-LD
+  manifest.ts           Web App Manifest
+components/
+  marketing/            Landing page components (hero, navbar, footer, FAQ, CTAs…)
+  dashboard/             Dashboard UI (dashboard-client, timer-tab, live-scroll-tab)
+  ui/                   Reusable primitives (button, card, accordion)
 lib/
   engine/               Detection, triggers, insights, predictions, coach, demo data (pure functions)
   hooks/                use-break-timer, use-away-tracker, use-install-state

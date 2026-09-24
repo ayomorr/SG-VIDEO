@@ -1,5 +1,5 @@
 import { Sparkles } from "lucide-react";
-import { Reveal } from "@/components/reveal";
+import { Reveal } from "@/components/marketing/reveal";
 
 export function FinalCta() {
   return (

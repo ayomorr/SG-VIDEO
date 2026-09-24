@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { InstallButton } from "@/components/install-button";
+import { ThemeToggle } from "@/components/marketing/theme-toggle";
+import { InstallButton } from "@/components/marketing/install-button";
 import { siteConfig } from "@/lib/site";
 import { cn } from "@/lib/utils";
 

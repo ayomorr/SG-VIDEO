@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { Brain, ClipboardList, Timer } from "lucide-react";
-import { SectionHeading } from "@/components/section-heading";
-import { Reveal } from "@/components/reveal";
+import { cn } from "@/lib/utils";
+import { SectionHeading } from "@/components/marketing/section-heading";
+import { Reveal } from "@/components/marketing/reveal";
+import { Button } from "@/components/ui/button";
 import { DoomPhoneMark } from "@/components/logo";
 
 function LogMock() {
@@ -56,14 +58,20 @@ function InsightMock() {
 
 function TimerMock() {
   return (
-    <div className="mx-auto w-full max-w-[220px] rounded-2xl border border-border bg-card p-4 shadow-card">
+    <div className="relative mx-auto w-full max-w-[220px] rounded-2xl border border-primary/40 bg-gradient-to-b from-primary/10 to-transparent p-4 shadow-glow-teal">
+      <span
+        className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-glow-teal"
+        aria-hidden="true"
+      >
+        The main feature
+      </span>
       <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
         Break timer
       </p>
-      <p className="mt-3 text-center font-heading text-3xl font-semibold tabular-nums tracking-tight text-foreground">
+      <p className="mt-3 text-center font-heading text-4xl font-bold tabular-nums tracking-tight text-foreground sm:text-5xl">
         07:42
       </p>
-      <div className="mt-3 space-y-1.5 rounded-xl bg-muted px-3 py-2.5 text-[10px] text-muted-foreground">
+      <div className="mt-4 space-y-1.5 rounded-xl bg-muted px-3 py-2.5 text-[10px] text-muted-foreground">
         <p className="flex justify-between">
           <span>Alarm</span>
           <span className="font-medium text-foreground">10:07 pm</span>
@@ -72,6 +80,14 @@ function TimerMock() {
           <span>Heads-up before end</span>
           <span className="font-medium text-foreground">09:52 pm</span>
         </p>
+      </div>
+      <div className="mt-4">
+        <Button asChild className="w-full">
+          <a href="/app">
+            Start a break timer
+            <Timer className="h-5 w-5" aria-hidden="true" />
+          </a>
+        </Button>
       </div>
     </div>
   );
@@ -82,6 +98,7 @@ const steps: {
   title: string;
   caption: string;
   mock: () => ReactNode;
+  featured?: boolean;
 }[] = [
   {
     icon: ClipboardList,
@@ -103,6 +120,7 @@ const steps: {
     caption:
       "Set a countdown that heads-up you before the end and rings when it's done — an alarm for stepping away, not a block.",
     mock: () => <TimerMock />,
+    featured: true,
   },
 ];
 
@@ -123,9 +141,17 @@ export function HowItWorks() {
           />
           {steps.map((step, i) => (
             <Reveal key={step.title} delay={i * 0.14} className="relative">
-              <div className="flex h-full flex-col rounded-3xl border bg-card p-8 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-soft">
+              <div className={cn(
+                "flex h-full flex-col rounded-3xl border bg-card p-8 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-soft",
+                step.featured ? "border-primary/40 ring-1 ring-primary/20" : "border-border",
+              )}>
                 <div className="mb-8 flex items-center gap-4">
-                  <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
+                  <span className={cn(
+                    "relative flex h-12 w-12 items-center justify-center rounded-2xl border text-primary",
+                    step.featured
+                      ? "border-primary/50 bg-primary/20 shadow-glow-teal"
+                      : "border-primary/30 bg-primary/10",
+                  )}>
                     <step.icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <span className="font-heading text-sm font-semibold text-muted-foreground">
