@@ -105,31 +105,89 @@ function unlockAudio() {
   if (ctx && ctx.state === "suspended") void ctx.resume();
 }
 
+let chimeBus: GainNode | null = null;
+
+function getChimeBus(ctx: AudioContext): GainNode {
+  if (!chimeBus) {
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -10;
+    limiter.knee.value = 6;
+    limiter.ratio.value = 14;
+    limiter.attack.value = 0.003;
+    limiter.release.value = 0.25;
+    const bus = ctx.createGain();
+    bus.gain.value = 1;
+    bus.connect(limiter);
+    limiter.connect(ctx.destination);
+    chimeBus = bus;
+  }
+  return chimeBus;
+}
+
+function scheduleTone(
+  ctx: AudioContext,
+  bus: GainNode,
+  freq: number,
+  at: number,
+  peak: number,
+  decay: number,
+  type: OscillatorType,
+) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, at);
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(peak, at + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+  osc.connect(gain);
+  gain.connect(bus);
+  osc.start(at);
+  osc.stop(at + decay + 0.02);
+}
+
 function playChime() {
   const ctx = getChimeCtx();
   if (!ctx) return;
   try {
     if (ctx.state === "suspended") void ctx.resume();
+    const bus = getChimeBus(ctx);
+    const t0 = ctx.currentTime;
+    bus.gain.cancelScheduledValues(t0);
+    bus.gain.setValueAtTime(1, t0);
     const notes: [number, number][] = [
-      [880, 0],
-      [880, 0.4],
-      [1174, 0.8],
+      [988, 0],
+      [988, 0.17],
+      [1319, 0.34],
+      [988, 1.2],
+      [988, 1.37],
+      [1319, 1.54],
+      [988, 2.4],
+      [988, 2.57],
+      [1319, 2.74],
+      [1319, 3.7],
+      [1319, 3.87],
+      [1568, 4.04],
     ];
     for (const [freq, at] of notes) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.001, ctx.currentTime + at);
-      gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + at + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + at + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + at);
-      osc.stop(ctx.currentTime + at + 0.4);
+      scheduleTone(ctx, bus, freq, t0 + at, 0.55, 0.42, "triangle");
+      scheduleTone(ctx, bus, freq * 2, t0 + at, 0.2, 0.3, "triangle");
     }
+    scheduleTone(ctx, bus, 1568, t0 + 4.04, 0.5, 1.4, "sine");
   } catch {
     // Audio unavailable — the in-app alarm still covers it.
+  }
+}
+
+function silenceChime() {
+  const ctx = chimeCtx;
+  const bus = chimeBus;
+  if (!ctx || !bus) return;
+  try {
+    bus.gain.cancelScheduledValues(ctx.currentTime);
+    bus.gain.setValueAtTime(0, ctx.currentTime);
+  } catch {
+    // Audio unavailable.
   }
 }
 
@@ -138,20 +196,27 @@ function playHeadsUpChime() {
   if (!ctx) return;
   try {
     if (ctx.state === "suspended") void ctx.resume();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = 660;
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.35);
+    const bus = getChimeBus(ctx);
+    const t0 = ctx.currentTime;
+    bus.gain.cancelScheduledValues(t0);
+    bus.gain.setValueAtTime(1, t0);
+    scheduleTone(ctx, bus, 784, t0, 0.45, 0.3, "triangle");
+    scheduleTone(ctx, bus, 784, t0 + 0.22, 0.45, 0.3, "triangle");
+    scheduleTone(ctx, bus, 1047, t0 + 0.44, 0.45, 0.7, "triangle");
   } catch {
     // Audio unavailable.
   }
+}
+
+/**
+ * The heads-up can never land on top of the alarm, so short breaks trim it
+ * instead of silently dropping it. Returns the effective lead time in ms.
+ */
+function resolveWarnMs(warnMs: number, durationMs: number): number {
+  if (warnMs <= 0 || durationMs <= 0) return 0;
+  const room = durationMs - 30_000;
+  if (room < 60_000) return 0;
+  return Math.min(warnMs, Math.max(60_000, Math.floor(room / 2)));
 }
 
 function vibratePattern() {
@@ -165,28 +230,55 @@ function vibratePattern() {
 }
 
 async function sendNotification(title: string, body: string, tag: string) {
-  try {
-    const opts: NotificationOptions = {
-      body,
-      tag,
-      icon: "/apple-touch-icon-180.png",
-    };
-    if ("serviceWorker" in navigator && typeof navigator.serviceWorker.ready === "object") {
-      const reg = await navigator.serviceWorker.ready;
-      if (typeof reg.showNotification === "function") {
-        await reg.showNotification(title, opts);
-        return;
+  if (!("Notification" in window)) return;
+
+  // Ask for permission if the user hasn't decided yet. This runs inside the
+  // timer's gesture (Start tap) so browsers that require a user gesture can
+  // still show the prompt.
+  let perm = Notification.permission;
+  if (perm === "default") {
+    try {
+      perm = await Notification.requestPermission();
+    } catch {
+      return;
+    }
+  }
+  if (perm !== "granted") return;
+
+  const opts: NotificationOptions = {
+    body,
+    tag,
+    icon: "/apple-touch-icon-180.png",
+  };
+
+  // Prefer the service worker (works even from a background page), but never
+  // wait on `ready` forever — if there's no active SW, fall through to the
+  // plain constructor instead of silently dying.
+  if ("serviceWorker" in navigator) {
+    try {
+      const reg = await Promise.race([
+        navigator.serviceWorker.getRegistration(),
+        new Promise<ServiceWorkerRegistration | null>((resolve) =>
+          setTimeout(() => resolve(null), 1500),
+        ),
+      ]);
+      if (reg && typeof reg.showNotification === "function") {
+        try {
+          await reg.showNotification(title, opts);
+          return;
+        } catch {
+          // Fall through to the constructor.
+        }
       }
+    } catch {
+      // Fall through to the constructor.
     }
-    if ("Notification" in window && typeof Notification === "function") {
-      const perm =
-        typeof Notification.requestPermission === "function"
-          ? await Notification.requestPermission()
-          : Notification.permission;
-      if (perm === "granted") new Notification(title, opts);
-    }
+  }
+
+  try {
+    new Notification(title, opts);
   } catch {
-    // Notification failed — the in-app alarm still fires.
+    // In-app alarm still covers it.
   }
 }
 
@@ -236,7 +328,8 @@ export function useBreakTimer() {
   const warnedRef = useRef(false);
   const bgWarnScheduledRef = useRef(false);
 
-  const warnMs = warnMin > 0 ? warnMin * 60_000 : 0;
+  const warnMs = resolveWarnMs(warnMin * 60_000, durationMs);
+  const warnEffectiveMin = Math.round(warnMs / 60_000);
 
   useEffect(() => {
     setNotifState("Notification" in window ? Notification.permission : "denied");
@@ -262,13 +355,15 @@ export function useBreakTimer() {
   useEffect(() => {
     unlockAudio();
     const unlock = () => unlockAudio();
-    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("touchstart", unlock);
     const onVis = () => {
       if (document.visibilityState === "visible") unlockAudio();
     };
     document.addEventListener("visibilitychange", onVis);
     return () => {
       window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchstart", unlock);
       document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
@@ -278,14 +373,14 @@ export function useBreakTimer() {
     setWarned(true);
     savePersisted({ running: true, endAt, durationMs, warned: true });
     if (!bgWarnScheduledRef.current) {
-      playHeadsUpChime();
+      if (sound) playHeadsUpChime();
       void sendNotification(
         "Scroll Detect — almost up",
-        `${warnMin} min left on your break. Wrap up so it doesn't get cut off.`,
+        `${warnEffectiveMin} min left on your break. Wrap up so it doesn't get cut off.`,
         "timer-headsup",
       );
     }
-  }, [endAt, durationMs, warnMin]);
+  }, [endAt, durationMs, warnEffectiveMin, sound]);
 
   // Always-on countdown: it lives here (mounted across the whole app), so the
   // heads-up and alarm fire even when the user is looking at another tab.
@@ -294,7 +389,7 @@ export function useBreakTimer() {
     const id = window.setInterval(() => {
       const left = endAt - Date.now();
       setRemaining(Math.max(0, left));
-      if (!warnedRef.current && warnMs > 0 && warnMs < durationMs - 30_000 && left <= warnMs) {
+      if (!warnedRef.current && warnMs > 0 && left <= warnMs) {
         fireHeadsUp();
       }
       if (left <= 0) {
@@ -323,7 +418,7 @@ export function useBreakTimer() {
       if (document.visibilityState === "visible") {
         const left = endAt - Date.now();
         setRemaining(Math.max(0, left));
-        if (!warnedRef.current && warnMs > 0 && warnMs < durationMs - 30_000 && left <= warnMs) {
+        if (!warnedRef.current && warnMs > 0 && left <= warnMs) {
           fireHeadsUp();
         }
         if (left <= 0 && !finishedRef.current) {
@@ -358,24 +453,39 @@ export function useBreakTimer() {
     saveDurationPref(durationMs);
     unlockAudio();
 
-    // Precise background alarm where Notification Triggers is supported.
-    void scheduleBackgroundNotification(
-      "Scroll Detect — break's over",
-      "Your timer just finished. Stretch, drink water, and only then decide what's next.",
-      "timer-break",
-      target,
-    );
-
-    // Heads-up before the alarm (auto-trimmed for shorter breaks).
-    if (warnMs > 0 && warnMs < durationMs - 30_000) {
+    const scheduleTriggers = () => {
+      // Precise background alarm where Notification Triggers is supported.
       void scheduleBackgroundNotification(
-        "Scroll Detect — almost up",
-        `${warnMin} min left on your break. Wrap up so it doesn't get cut off.`,
-        "timer-headsup",
-        target - warnMs,
-      ).then((ok) => {
-        bgWarnScheduledRef.current = ok;
+        "Scroll Detect — break's over",
+        "Your timer just finished. Stretch, drink water, and only then decide what's next.",
+        "timer-break",
+        target,
+      );
+
+      // Heads-up before the alarm (auto-trimmed for shorter breaks).
+      if (warnMs > 0) {
+        void scheduleBackgroundNotification(
+          "Scroll Detect — almost up",
+          `${warnEffectiveMin} min left on your break. Wrap up so it doesn't get cut off.`,
+          "timer-headsup",
+          target - warnMs,
+        ).then((ok) => {
+          bgWarnScheduledRef.current = ok;
+        });
+      }
+    };
+
+    // Browsers can't show a permission prompt outside a user gesture, and this
+    // tap IS the gesture — so ask right here instead of waiting for the tiny
+    // "Enable" toggle. If permission was already granted (or denied), we don't
+    // prompt again.
+    if ("Notification" in window && Notification.permission === "default") {
+      void Notification.requestPermission().then((perm) => {
+        setNotifState(perm);
+        if (perm === "granted") scheduleTriggers();
       });
+    } else {
+      scheduleTriggers();
     }
   };
 
@@ -390,6 +500,7 @@ export function useBreakTimer() {
   };
 
   const cancel = () => {
+    silenceChime();
     finishedRef.current = false;
     warnedRef.current = false;
     setWarned(false);
@@ -451,6 +562,11 @@ export function useBreakTimer() {
     saveWarnMin(min);
   };
 
+  const testSound = () => {
+    unlockAudio();
+    playChime();
+  };
+
   return {
     phase,
     remaining,
@@ -463,6 +579,7 @@ export function useBreakTimer() {
     customMinutes,
     finishTime,
     warnMin,
+    warnEffectiveMin,
     warned,
     setCustomDays,
     setCustomHours,
@@ -470,6 +587,7 @@ export function useBreakTimer() {
     setFinishTime,
     setWarnMin,
     toggleSound,
+    testSound,
     requestNotifs,
     changeWarnMin,
     start,

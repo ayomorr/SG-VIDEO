@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Gauge,
   Hand,
@@ -18,7 +18,6 @@ import { addSession } from "@/lib/store";
 import {
   LIVE_CHECKIN_MINUTES,
   LIVE_GOAL_EXTEND_MINUTES,
-  LIVE_IDLE_BREAK_MS,
   LIVE_RISK_LABEL,
   LIVE_WINDOW_MS,
   classifyLive,
@@ -33,61 +32,6 @@ const RISK_TONE: Record<LiveRisk, string> = {
   extended: "border-coral/40 bg-coral/5 text-coral",
   high: "border-coral/40 bg-coral/10 text-coral",
 };
-
-const AUTHORS = [
-  "Maya",
-  "Theo",
-  "Zara",
-  "Adrian",
-  "Noa",
-  "Felix",
-  "Imani",
-  "Jonas",
-];
-
-const POSTS = [
-  "No one is talking about the 11pm scroll spiral.",
-  "Just finished this — feels huge, sharing here.",
-  "Hot take: notifications are designed to be pushed.",
-  "Found a 10-line trick that changed my mornings.",
-  "Why do I open the feed when I'm tired?",
-  "3 am, one more post, then bed. Again.",
-  "The infinite scroll was a mistake but it pays too well.",
-  "Day 4 without checking my phone first thing.",
-  "What's your go-to when the doom hits at night?",
-  "Small wins: put the charger across the room.",
-  "This took way longer than it should have.",
-  "Alright, actually logging off after this one.",
-  "The feed adapts faster than your willpower.",
-  "Nobody shares this but everyone feels it.",
-  "Two tabs, one feed, zero idea how long I was there.",
-  "Recommend me one thing to read instead of scrolling.",
-  "Realized my worst scrolls start with curiosity.",
-  "An app that just a countdown would be enough.",
-  "Your urge to check is not a moral failing.",
-  "Tonight I'm trying the no-phone kitchen rule.",
-  "Why is the worst content the stickiest?",
-  "Set a timer before opening the feed today.",
-  "The scroll is the reward and the punishment.",
-  "One run, 40 minutes, no memory of the middle.",
-  "I put a sticker on my phone that says 'why'.",
-  "Rebel move: leave the refresh alone.",
-  "Streaks are cute but sleep is better.",
-  "Anyone else lose an argument with a feed?",
-  "The algorithm finally met my 'sleep' struggle.",
-  "Posting this so I stop editing for five hours.",
-];
-
-const GRADIENTS = [
-  "from-teal to-blue",
-  "from-lavender to-focus",
-  "from-coral to-amber/60",
-  "from-blue to-lavender",
-  "from-teal to-lavender",
-  "from-focus to-coral",
-  "from-amber to-coral",
-  "from-lavender to-teal",
-];
 
 const GOAL_OPTIONS = [
   { label: "15 min", value: 15 },
@@ -197,8 +141,6 @@ export function LiveScrollTab({
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [now, setNow] = useState(0);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const prevTop = useRef(0);
   const windowQueue = useRef<number[]>([]);
   const endedRef = useRef(false);
   const snap = useRef<{
@@ -210,16 +152,6 @@ export function LiveScrollTab({
     goalMinutes: number;
     label: string;
   } | null>(null);
-
-  const posts = useMemo(
-    () =>
-      Array.from({ length: 40 }, (_, i) => ({
-        author: AUTHORS[i % AUTHORS.length],
-        text: POSTS[i % POSTS.length],
-        gradient: GRADIENTS[i % GRADIENTS.length],
-      })),
-    [],
-  );
 
   const elapsedMs = Math.max(0, (now || endAt || Date.now()) - startAt);
   const goalMs = goalMinutes * 60_000;
@@ -286,7 +218,7 @@ export function LiveScrollTab({
           moodAfter: null,
           source: "live",
           breaks: s.breaksTaken,
-          note: `${s.eventCount} scrolls · ${fmtDistance(s.distancePx)} of feed · ${
+          note: `${s.eventCount} scrolls · ${fmtDistance(s.distancePx)} of scrolling · ${
             s.breaksTaken
           } pause${s.breaksTaken === 1 ? "" : "s"} · plan ${s.goalMinutes} min · classified ${s.label}`,
         });
@@ -298,7 +230,6 @@ export function LiveScrollTab({
 
   const begin = () => {
     windowQueue.current = [];
-    prevTop.current = 0;
     setEventCount(0);
     setDistancePx(0);
     setBreaksTaken(0);
@@ -332,7 +263,7 @@ export function LiveScrollTab({
     moodAfter: after ?? null,
     source: "live",
     breaks: breaksTaken,
-    note: `${eventCount} scrolls · ${fmtDistance(distancePx)} of feed · ${breaksTaken} pause${
+    note: `${eventCount} scrolls · ${fmtDistance(distancePx)} of scrolling · ${breaksTaken} pause${
       breaksTaken === 1 ? "" : "s"
     } · plan ${goalMinutes} min · classified ${CLASS_BADGE[liveClass].label}`,
   });
@@ -370,32 +301,6 @@ export function LiveScrollTab({
 
   const dismissPrompt = () => setPrompt(null);
 
-  const handleScroll = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const t = performance.now();
-    const delta = Math.abs(el.scrollTop - prevTop.current);
-    prevTop.current = el.scrollTop;
-    if (lastEventAt > 0 && t - lastEventAt >= LIVE_IDLE_BREAK_MS) {
-      setBreaksTaken((b) => {
-        if (snap.current) snap.current.breaksTaken = b + 1;
-        return b + 1;
-      });
-    }
-    setLastEventAt(t);
-    if (delta > 0) {
-      setEventCount((c) => {
-        if (snap.current) snap.current.eventCount = c + 1;
-        return c + 1;
-      });
-      setDistancePx((d) => {
-        if (snap.current) snap.current.distancePx = d + delta;
-        return d + delta;
-      });
-      windowQueue.current.push(t);
-    }
-  };
-
   if (phase === "idle") {
     return (
       <Card className="p-8 md:p-10">
@@ -407,11 +312,11 @@ export function LiveScrollTab({
             The live scroll lab
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-            Decide how long you want to scroll, then open the feed. The clock
-            counts down your chosen amount while live counts of scrolls,
+            Decide how long you want to scroll, then start the session. The
+            clock counts down your chosen amount while live counts of scrolls,
             distance, and pauses build beside it — and it prompts you at the
             milestones. Real apps can&apos;t be watched by a browser, so this is
-            the one feed Scroll Detect can see.
+            the one scroll surface Scroll Detect can see.
           </p>
 
           <div className="mt-7 text-left">
@@ -507,7 +412,7 @@ export function LiveScrollTab({
             className="mt-8 inline-flex h-12 cursor-pointer items-center gap-2 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-glow-teal transition-transform hover:-translate-y-0.5"
           >
             <Play className="h-4 w-4" aria-hidden="true" />
-            Open the feed &amp; start the timer
+            Open the scroll surface &amp; start the timer
           </button>
         </div>
       </Card>
@@ -525,7 +430,7 @@ export function LiveScrollTab({
             Run captured.
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {fmtClock(endAt - startAt)} on the feed (you planned {goalMinutes}
+            {fmtClock(endAt - startAt)} of scrolling (you planned {goalMinutes}
             min) · {eventCount} scrolls across {fmtDistance(distancePx)} ·{" "}
             {breaksTaken} pause{breaksTaken === 1 ? "" : "s"} ·{" "}
             <span className={CLASS_BADGE[liveClass].className}>
@@ -607,59 +512,8 @@ export function LiveScrollTab({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="rounded-3xl border border-border bg-card shadow-card">
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="h-[560px] overflow-y-auto overscroll-contain px-4 py-4"
-        >
-          <div className="mb-4 rounded-2xl bg-muted px-4 py-3 text-[11px] text-muted-foreground">
-            This is a pretend feed for the live lab. Scroll, pause, go fast —
-            the classifier and the countdown watch everything you do here.
-          </div>
-          {posts.map((post, i) => (
-            <article
-              key={i}
-              className="mb-4 rounded-2xl border border-border p-4"
-            >
-              <header className="flex items-center gap-3">
-                <span
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white",
-                    post.gradient,
-                  )}
-                >
-                  {post.author[0]}
-                </span>
-                <div>
-                  <p className="text-xs font-semibold text-foreground">
-                    {post.author}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    @{post.author.toLowerCase()} · just now
-                  </p>
-                </div>
-              </header>
-              <p className="mt-3 text-sm leading-relaxed text-foreground/90">
-                {post.text}
-              </p>
-              <div
-                className={cn(
-                  "mt-3 h-28 rounded-xl bg-gradient-to-br",
-                  post.gradient,
-                )}
-              />
-            </article>
-          ))}
-          <p className="px-4 pb-2 text-center text-[10px] text-muted-foreground">
-            End of the demo feed — close the lab whenever you&apos;re ready.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-5">
-        <Card className="p-5">
+    <div className="flex flex-col gap-5">
+      <Card className="p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Live classification
@@ -697,7 +551,7 @@ export function LiveScrollTab({
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-2xl bg-muted px-3 py-3">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Time on feed
+                Time scrolling
               </p>
               <p className="mt-1 font-heading text-2xl font-semibold tabular-nums text-foreground">
                 {fmtClock(elapsedMs)}
@@ -790,7 +644,6 @@ export function LiveScrollTab({
           <Square className="h-4 w-4" aria-hidden="true" />
           End session
         </button>
-      </div>
     </div>
   );
 }

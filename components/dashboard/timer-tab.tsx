@@ -31,12 +31,14 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
     customMinutes,
     finishTime,
     warnMin,
+    warnEffectiveMin,
     warned,
     setCustomDays,
     setCustomHours,
     setCustomMinutes,
     changeWarnMin,
     toggleSound,
+    testSound,
     requestNotifs,
     start,
     pause,
@@ -46,7 +48,7 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
     applyFinishTime,
   } = timer;
 
-  const warnMs = warnMin > 0 ? warnMin * 60_000 : 0;
+  const warnMs = warnEffectiveMin * 60_000;
 
   const endLabel = new Date(endAt).toLocaleTimeString(undefined, {
     hour: "numeric",
@@ -224,28 +226,37 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
             Alarm settings
           </h3>
 
-          <button
-            type="button"
-            onClick={() => toggleSound(!sound)}
-            className="flex cursor-pointer items-center justify-between rounded-xl border border-border/70 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-          >
-            <span className="flex items-center gap-2">
-              {sound ? (
-                <Volume2 className="h-4 w-4 text-primary" aria-hidden="true" />
-              ) : (
-                <VolumeX className="h-4 w-4" aria-hidden="true" />
-              )}
-              Sound chime
-            </span>
-            <span className={cn("relative h-6 w-11 rounded-full transition-colors", sound ? "bg-primary" : "bg-muted/40")}>
-              <span
-                className={cn(
-                  "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
-                  sound ? "left-[22px]" : "left-0.5",
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => toggleSound(!sound)}
+              className="flex flex-1 cursor-pointer items-center justify-between rounded-xl border border-border/70 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+            >
+              <span className="flex items-center gap-2">
+                {sound ? (
+                  <Volume2 className="h-4 w-4 text-primary" aria-hidden="true" />
+                ) : (
+                  <VolumeX className="h-4 w-4 text-primary" aria-hidden="true" />
                 )}
-              />
-            </span>
-          </button>
+                Sound chime
+              </span>
+              <span className={cn("relative h-6 w-11 rounded-full transition-colors", sound ? "bg-primary" : "bg-muted/40")}>
+                <span
+                  className={cn(
+                    "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
+                    sound ? "left-[22px]" : "left-0.5",
+                  )}
+                />
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={testSound}
+              className="shrink-0 cursor-pointer rounded-xl border border-border/70 px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+            >
+              Test
+            </button>
+          </div>
 
           <div className="rounded-xl border border-border/70 px-4 py-3">
             <div className="flex items-center justify-between gap-2">
@@ -293,7 +304,9 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
             </select>
           </label>
           <p className="-mt-1 px-1 text-xs leading-relaxed text-muted-foreground">
-            Short breaks auto-trim this so it never overlaps the alarm.
+            {warnEffectiveMin > 0 && warnEffectiveMin !== warnMin
+              ? `Trimmed to ${warnEffectiveMin} min so it never overlaps the alarm.`
+              : "Short breaks auto-trim this so it never overlaps the alarm."}
           </p>
         </div>
 

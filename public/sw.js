@@ -22,6 +22,22 @@ self.addEventListener("message", (event) => {
   }
 });
 
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of clients) {
+        if (client.url.includes("/app") && "focus" in client) {
+          await client.focus();
+          return;
+        }
+      }
+      await self.clients.openWindow("/app");
+    })(),
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;

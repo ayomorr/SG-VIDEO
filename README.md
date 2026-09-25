@@ -32,7 +32,7 @@ app/
   manifest.ts           Web App Manifest
 components/
   marketing/            Landing page components (hero, navbar, footer, FAQ, CTAs…)
-  dashboard/             Dashboard UI (dashboard-client, timer-tab, live-scroll-tab)
+  dashboard/             Dashboard UI (dashboard-client, timer-tab)
   ui/                   Reusable primitives (button, card, accordion)
 lib/
   engine/               Detection, triggers, insights, predictions, coach, demo data (pure functions)
