@@ -1,29 +1,38 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  acquireWakeLock,
+  ALARM_SOUND_OPTIONS,
+  type AlarmSoundChoice,
+  alarmSoundLabel,
+  getAlarmMuted,
+  getAlarmSound,
+  getAlarmVolume,
+  isAlarmRinging,
+  kickAlarm,
+  previewAlarm,
+  primeAlarmAudio,
+  rearmWakeLock,
+  releaseWakeLock,
+  setAlarmMuted,
+  setAlarmSound,
+  setAlarmVolume,
+  startAlarm,
+  stopAlarm,
+  subscribeAlarm,
+} from "@/lib/audio/alarm";
+import { playChime, playHeadsUpChime, primeChimeCtx } from "@/lib/audio/chime";
 
 const STORE_KEY = "scrolldictive.timer.v1";
 const DURATION_PREF_KEY = "scrolldictive.timer.pref.v1";
-const SOUND_KEY = "scrolldictive.timer.sound.v1";
-const SOUND_CHOICE_KEY = "scrolldictive.timer.soundchoice.v1";
 const WARN_KEY = "scrolldictive.timer.warn.v1";
 
 export const PRESETS_MIN = [5, 10, 15, 25, 45];
 export const WARN_OPTIONS_MIN = [0, 1, 2, 5, 10, 15] as const;
 
-export type AlarmSoundChoice = "siren" | "screech" | "horn";
-
-export const ALARM_SOUND_OPTIONS: { value: AlarmSoundChoice; label: string }[] = [
-  { value: "siren", label: "Siren" },
-  { value: "screech", label: "Screech" },
-  { value: "horn", label: "Truck horn" },
-];
-
-const ALARM_FILES: Record<AlarmSoundChoice, string> = {
-  siren: "/audio/siren.mp3",
-  screech: "/audio/screech.mp3",
-  horn: "/audio/truck-horn.mp3",
-};
+export type { AlarmSoundChoice };
+export { ALARM_SOUND_OPTIONS, alarmSoundLabel };
 
 export type BreakTimerPhase = "idle" | "running" | "done";
 
@@ -32,6 +41,8 @@ interface PersistedTimer {
   endAt: number;
   durationMs: number;
   warned: boolean;
+  /** Set once the break is over: the alarm must keep ringing until dismissed. */
+  alarmPending?: boolean;
 }
 
 export function mmss(ms: number): string {
@@ -39,31 +50,6 @@ export function mmss(ms: number): string {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
-
-function loadSound(): boolean {
-  if (typeof localStorage === "undefined") return true;
-  return localStorage.getItem(SOUND_KEY) !== "0";
-}
-
-function saveSound(on: boolean) {
-  if (typeof localStorage === "undefined") return;
-  localStorage.setItem(SOUND_KEY, on ? "1" : "0");
-}
-
-function loadSoundChoice(): AlarmSoundChoice {
-  if (typeof localStorage === "undefined") return "siren";
-  const stored = localStorage.getItem(SOUND_CHOICE_KEY);
-  return (ALARM_SOUND_OPTIONS as { value: AlarmSoundChoice }[]).some(
-    (o) => o.value === stored,
-  )
-    ? (stored as AlarmSoundChoice)
-    : "siren";
-}
-
-function saveSoundChoice(choice: AlarmSoundChoice) {
-  if (typeof localStorage === "undefined") return;
-  localStorage.setItem(SOUND_CHOICE_KEY, choice);
 }
 
 function loadDurationPref(): number {
@@ -79,7 +65,11 @@ function saveDurationPref(ms: number) {
 
 function loadWarnMin(): number {
   if (typeof localStorage === "undefined") return 15;
-  const raw = Number(localStorage.getItem(WARN_KEY));
+  // `Number(null)` is 0 and 0 is a valid option, so an absent key would
+  // silently disable the heads-up for every new user.
+  const stored = localStorage.getItem(WARN_KEY);
+  if (stored === null) return 15;
+  const raw = Number(stored);
   return (WARN_OPTIONS_MIN as readonly number[]).includes(raw) ? raw : 15;
 }
 
@@ -111,185 +101,36 @@ function savePersisted(
   else localStorage.removeItem(STORE_KEY);
 }
 
-let chimeCtx: AudioContext | null = null;
-
-function getChimeCtx(): AudioContext | null {
-  try {
-    if (!chimeCtx) {
-      const Ctor =
-        window.AudioContext ??
-        (window as unknown as { webkitAudioContext?: typeof AudioContext })
-          .webkitAudioContext;
-      if (!Ctor) return null;
-      chimeCtx = new Ctor();
-    }
-    return chimeCtx;
-  } catch {
-    return null;
-  }
+/** Keeps the alarm owed across reloads and navigation until it is dismissed. */
+function persistPendingAlarm(durationMs: number) {
+  savePersisted({
+    running: false,
+    endAt: 0,
+    durationMs,
+    warned: true,
+    alarmPending: true,
+  });
 }
 
-/** iOS/Chrome block audio until a user gesture unlocks it. */
-function unlockAudio() {
-  const ctx = getChimeCtx();
-  if (ctx && ctx.state === "suspended") void ctx.resume();
+/**
+ * The break-over alarm is started in the same tick as the reflection
+ * questions, with no grace window: a silent gap is exactly the failure mode
+ * this is meant to prevent. The questions sit on top of the ringing alarm,
+ * and the alarm keeps going until the user dismisses them.
+ */
+function ringNow() {
+  startAlarm(
+    "Your timer just finished. Stretch, drink water, and only then decide what's next.",
+  );
 }
 
-let chimeBus: GainNode | null = null;
-
-function getChimeBus(ctx: AudioContext): GainNode {
-  if (!chimeBus) {
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -10;
-    limiter.knee.value = 6;
-    limiter.ratio.value = 14;
-    limiter.attack.value = 0.003;
-    limiter.release.value = 0.25;
-    const bus = ctx.createGain();
-    bus.gain.value = 1;
-    bus.connect(limiter);
-    limiter.connect(ctx.destination);
-    chimeBus = bus;
+/** Bounded so a preview can never be stranded ringing with no stop control. */
+function ringPreview() {
+  if (isAlarmRinging()) {
+    stopAlarm();
+    return;
   }
-  return chimeBus;
-}
-
-function scheduleTone(
-  ctx: AudioContext,
-  bus: GainNode,
-  freq: number,
-  at: number,
-  peak: number,
-  decay: number,
-  type: OscillatorType,
-) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, at);
-  gain.gain.setValueAtTime(0.0001, at);
-  gain.gain.exponentialRampToValueAtTime(peak, at + 0.012);
-  gain.gain.exponentialRampToValueAtTime(0.0001, at + decay);
-  osc.connect(gain);
-  gain.connect(bus);
-  osc.start(at);
-  osc.stop(at + decay + 0.02);
-  return osc;
-}
-
-const ALARM_MAX_MS = 600_000;
-
-let alarmTimer: ReturnType<typeof setTimeout> | null = null;
-let alarmAudio: HTMLAudioElement | null = null;
-let alarmStartedAt = 0;
-
-function getAlarmAudio(choice: AlarmSoundChoice): HTMLAudioElement {
-  if (!alarmAudio) {
-    alarmAudio = new Audio();
-    alarmAudio.loop = true;
-  }
-  if (alarmAudio.src !== ALARM_FILES[choice]) {
-    alarmAudio.src = ALARM_FILES[choice];
-  }
-  return alarmAudio;
-}
-
-function startAlarm(choice: AlarmSoundChoice) {
-  stopAlarm();
-  try {
-    const audio = getAlarmAudio(choice);
-    audio.volume = 1;
-    audio.currentTime = 0;
-    alarmStartedAt = performance.now();
-    void audio.play().catch(() => {
-      // Blocked (e.g. iOS background) — the notification still covers it.
-    });
-    alarmTimer = setTimeout(() => {
-      if (performance.now() - alarmStartedAt >= ALARM_MAX_MS) {
-        stopAlarm();
-      }
-    }, ALARM_MAX_MS + 100);
-  } catch {
-    // Audio unavailable.
-  }
-}
-
-function stopAlarm() {
-  if (alarmTimer !== null) {
-    clearTimeout(alarmTimer);
-    alarmTimer = null;
-  }
-  if (alarmAudio) {
-    try {
-      alarmAudio.pause();
-      alarmAudio.currentTime = 0;
-    } catch {
-      // Audio unavailable.
-    }
-  }
-  silenceChime();
-}
-
-function playChime() {
-  const ctx = getChimeCtx();
-  if (!ctx) return;
-  try {
-    if (ctx.state === "suspended") void ctx.resume();
-    const bus = getChimeBus(ctx);
-    const t0 = ctx.currentTime;
-    bus.gain.cancelScheduledValues(t0);
-    bus.gain.setValueAtTime(1, t0);
-    const notes: [number, number][] = [
-      [988, 0],
-      [988, 0.17],
-      [1319, 0.34],
-      [988, 1.2],
-      [988, 1.37],
-      [1319, 1.54],
-      [988, 2.4],
-      [988, 2.57],
-      [1319, 2.74],
-      [1319, 3.7],
-      [1319, 3.87],
-      [1568, 4.04],
-    ];
-    for (const [freq, at] of notes) {
-      scheduleTone(ctx, bus, freq, t0 + at, 0.55, 0.42, "triangle");
-      scheduleTone(ctx, bus, freq * 2, t0 + at, 0.2, 0.3, "triangle");
-    }
-    scheduleTone(ctx, bus, 1568, t0 + 4.04, 0.5, 1.4, "sine");
-  } catch {
-    // Audio unavailable — the in-app alarm still covers it.
-  }
-}
-
-function silenceChime() {
-  const ctx = chimeCtx;
-  const bus = chimeBus;
-  if (!ctx || !bus) return;
-  try {
-    bus.gain.cancelScheduledValues(ctx.currentTime);
-    bus.gain.setValueAtTime(0, ctx.currentTime);
-  } catch {
-    // Audio unavailable.
-  }
-}
-
-function playHeadsUpChime() {
-  const ctx = getChimeCtx();
-  if (!ctx) return;
-  try {
-    if (ctx.state === "suspended") void ctx.resume();
-    const bus = getChimeBus(ctx);
-    const t0 = ctx.currentTime;
-    bus.gain.cancelScheduledValues(t0);
-    bus.gain.setValueAtTime(1, t0);
-    scheduleTone(ctx, bus, 784, t0, 0.45, 0.3, "triangle");
-    scheduleTone(ctx, bus, 784, t0 + 0.22, 0.45, 0.3, "triangle");
-    scheduleTone(ctx, bus, 1047, t0 + 0.44, 0.45, 0.7, "triangle");
-  } catch {
-    // Audio unavailable.
-  }
+  previewAlarm();
 }
 
 /**
@@ -303,36 +144,18 @@ function resolveWarnMs(warnMs: number, durationMs: number): number {
   return Math.min(warnMs, Math.max(60_000, Math.floor(room / 2)));
 }
 
-function vibratePattern() {
-  try {
-    if (typeof navigator.vibrate === "function") {
-      navigator.vibrate([400, 200, 400, 200, 400]);
-    }
-  } catch {
-    // Not supported — fine.
-  }
-}
-
 async function sendNotification(title: string, body: string, tag: string) {
   if (!("Notification" in window)) return;
 
-  // Ask for permission if the user hasn't decided yet. This runs inside the
-  // timer's gesture (Start tap) so browsers that require a user gesture can
-  // still show the prompt.
-  let perm = Notification.permission;
-  if (perm === "default") {
-    try {
-      perm = await Notification.requestPermission();
-    } catch {
-      return;
-    }
-  }
-  if (perm !== "granted") return;
+  // Never prompt from here. This runs on a timer, not a gesture, so the
+  // prompt would be rejected or silently dropped — and the permission is
+  // already requested up front when the user taps Start.
+  if (Notification.permission !== "granted") return;
 
   const opts: NotificationOptions = {
     body,
     tag,
-    icon: "/apple-touch-icon-180.png",
+    icon: "/icon-192.png",
   };
 
   // Prefer the service worker (works even from a background page), but never
@@ -386,7 +209,7 @@ async function scheduleBackgroundNotification(
     await reg.showNotification(title, {
       body,
       tag,
-      icon: "/apple-touch-icon-180.png",
+      icon: "/icon-192.png",
       showTrigger: new Trigger(when),
     } as NotificationOptions & { showTrigger: object });
     return true;
@@ -400,8 +223,6 @@ export function useBreakTimer() {
   const [remaining, setRemaining] = useState(durationMs);
   const [phase, setPhase] = useState<BreakTimerPhase>("idle");
   const [endAt, setEndAt] = useState(0);
-  const [sound, setSound] = useState(loadSound);
-  const [alarmSound, setAlarmSound] = useState<AlarmSoundChoice>(loadSoundChoice);
   const [notifState, setNotifState] = useState<NotificationPermission>("default");
   const [customDays, setCustomDays] = useState(0);
   const [customHours, setCustomHours] = useState(0);
@@ -414,20 +235,35 @@ export function useBreakTimer() {
   const warnedRef = useRef(false);
   const bgWarnScheduledRef = useRef(false);
 
+  const [alarmRinging, setAlarmRinging] = useState(isAlarmRinging());
+  const [alarmMuted, setMutedState] = useState(getAlarmMuted);
+  const [alarmVolume, setVolumeState] = useState(getAlarmVolume);
+  const [alarmSound, setAlarmSoundState] = useState<AlarmSoundChoice>(getAlarmSound);
+
   const warnMs = resolveWarnMs(warnMin * 60_000, durationMs);
   const warnEffectiveMin = Math.round(warnMs / 60_000);
 
   useEffect(() => {
     setNotifState("Notification" in window ? Notification.permission : "denied");
     const persisted = loadPersisted();
-    if (persisted && persisted.running) {
+    if (persisted?.alarmPending) {
+      // The break ended on a previous page load and was never dismissed.
+      setPhase("done");
+      setReflectionPending(true);
+      setWarned(true);
+      warnedRef.current = true;
+      finishedRef.current = true;
+      if (persisted.durationMs > 0) setDurationMs(persisted.durationMs);
+      ringNow();
+    } else if (persisted && persisted.running) {
       warnedRef.current = persisted.warned ?? false;
       setWarned(persisted.warned ?? false);
       if (persisted.endAt <= Date.now()) {
         setPhase("done");
         setReflectionPending(true);
         finishedRef.current = true;
-        savePersisted(null);
+        persistPendingAlarm(persisted.durationMs);
+        ringNow();
       } else {
         setEndAt(persisted.endAt);
         setRemaining(persisted.endAt - Date.now());
@@ -437,41 +273,70 @@ export function useBreakTimer() {
     }
   }, []);
 
-  // iOS only lets audio run after a user gesture, so unlock it on any
-  // interaction and re-unlock every time the app becomes visible again.
+  // Browsers only let audio run after a user gesture, and `startAlarm` is
+  // always reached from a timer, so every layer is primed from real
+  // interactions and re-primed whenever the app comes back to the front.
   useEffect(() => {
-    unlockAudio();
-    const unlock = () => unlockAudio();
-    window.addEventListener("pointerdown", unlock);
-    window.addEventListener("touchstart", unlock);
-    const onVis = () => {
-      if (document.visibilityState === "visible") unlockAudio();
+    primeChimeCtx();
+    primeAlarmAudio();
+
+    const onGesture = () => {
+      primeChimeCtx();
+      primeAlarmAudio();
+      kickAlarm();
     };
-    document.addEventListener("visibilitychange", onVis);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        primeChimeCtx();
+        primeAlarmAudio();
+        rearmWakeLock();
+        kickAlarm();
+      }
+    };
+
+    window.addEventListener("pointerdown", onGesture);
+    window.addEventListener("touchstart", onGesture);
+    window.addEventListener("keydown", onGesture);
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("touchstart", unlock);
-      document.removeEventListener("visibilitychange", onVis);
-      stopAlarm();
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("touchstart", onGesture);
+      window.removeEventListener("keydown", onGesture);
+      document.removeEventListener("visibilitychange", onVisible);
+      // Deliberately NOT stopAlarm(): the alarm is owed until the user
+      // dismisses it, so unmounting (including a client-side navigation away
+      // from /app) must not cancel a ring that is already owed. The module
+      // scope in lib/audio/alarm keeps it alive, and the next mount re-arms
+      // it from the `alarmPending` flag in localStorage.
     };
   }, []);
+
+  // The alarm lives outside React, so mirror its ringing state into the UI.
+  useEffect(
+    () =>
+      subscribeAlarm(() => {
+        setAlarmRinging(isAlarmRinging());
+      }),
+    [],
+  );
 
   const fireHeadsUp = useCallback(() => {
     warnedRef.current = true;
     setWarned(true);
     savePersisted({ running: true, endAt, durationMs, warned: true });
     if (!bgWarnScheduledRef.current) {
-      if (sound) playHeadsUpChime();
+      playHeadsUpChime();
       void sendNotification(
         "Scroll Detect — almost up",
         `${warnEffectiveMin} min left on your break. Wrap up so it doesn't get cut off.`,
         "timer-headsup",
       );
     }
-  }, [endAt, durationMs, warnEffectiveMin, sound]);
+  }, [endAt, durationMs, warnEffectiveMin]);
 
-  // Always-on countdown: it lives here (mounted across the whole app), so the
-  // heads-up and alarm fire even when the user is looking at another tab.
+  // Always-on countdown. It drives the heads-up and the alarm, and the alarm
+  // itself lives outside React so navigating to another tab cannot silence it.
   useEffect(() => {
     if (phase !== "running") return;
     const id = window.setInterval(() => {
@@ -484,21 +349,16 @@ export function useBreakTimer() {
         window.clearInterval(id);
         if (!finishedRef.current) {
           finishedRef.current = true;
-          savePersisted(null);
+          persistPendingAlarm(durationMs);
           setPhase("done");
           setReflectionPending(true);
-          if (sound) startAlarm(alarmSound);
-          vibratePattern();
-          void sendNotification(
-            "Scroll Detect — break's over",
-            "Your timer just finished. Stretch, drink water, and only then decide what's next.",
-            "timer-break",
-          );
+          releaseWakeLock();
+          ringNow();
         }
       }
     }, 250);
     return () => window.clearInterval(id);
-  }, [phase, endAt, durationMs, sound, alarmSound, warnMs, fireHeadsUp]);
+  }, [phase, endAt, durationMs, warnMs, fireHeadsUp]);
 
   // If the user returns to the app mid-break, catch up on the heads-up or end.
   useEffect(() => {
@@ -512,22 +372,17 @@ export function useBreakTimer() {
         }
         if (left <= 0 && !finishedRef.current) {
           finishedRef.current = true;
-          savePersisted(null);
+          persistPendingAlarm(durationMs);
           setPhase("done");
           setReflectionPending(true);
-          if (sound) startAlarm(alarmSound);
-          vibratePattern();
-          void sendNotification(
-            "Scroll Detect — break's over",
-            "Your timer just finished. Stretch, drink water, and only then decide what's next.",
-            "timer-break",
-          );
+          releaseWakeLock();
+          ringNow();
         }
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [phase, endAt, durationMs, sound, alarmSound, warnMs, fireHeadsUp]);
+  }, [phase, endAt, durationMs, warnMs, fireHeadsUp]);
 
   const start = () => {
     if (durationMs <= 0) return;
@@ -543,7 +398,13 @@ export function useBreakTimer() {
     setPhase("running");
     savePersisted({ running: true, endAt: target, durationMs, warned: false });
     saveDurationPref(durationMs);
-    unlockAudio();
+
+    // This tap is a real user gesture, which is the only moment audio and
+    // wake locks can be claimed — the alarm itself fires minutes from now
+    // with no activation left.
+    primeChimeCtx();
+    primeAlarmAudio();
+    acquireWakeLock();
 
     const scheduleTriggers = () => {
       // Precise background alarm where Notification Triggers is supported.
@@ -582,6 +443,8 @@ export function useBreakTimer() {
   };
 
   const pause = () => {
+    stopAlarm();
+    releaseWakeLock();
     const left = Math.max(0, endAt - Date.now());
     setRemaining(left);
     setDurationMs(left > 5_000 ? left : durationMs);
@@ -593,6 +456,7 @@ export function useBreakTimer() {
 
   const cancel = () => {
     stopAlarm();
+    releaseWakeLock();
     finishedRef.current = false;
     warnedRef.current = false;
     setWarned(false);
@@ -605,6 +469,9 @@ export function useBreakTimer() {
   };
 
   const applyPreset = (min: number) => {
+    // Changing the length mid-break would rewrite the persisted end time the
+    // alarm is owed against, so presets are inert while a break is running.
+    if (phase === "running") return;
     const ms = min * 60_000;
     setDurationMs(ms);
     setRemaining(ms);
@@ -624,6 +491,7 @@ export function useBreakTimer() {
   const applyFinishTime = (value: string) => {
     setFinishTime(value);
     if (!value) return;
+    if (phase === "running") return;
     const [h, m] = value.split(":").map(Number);
     if (!Number.isFinite(h) || !Number.isFinite(m)) return;
     const target = new Date();
@@ -645,30 +513,43 @@ export function useBreakTimer() {
     setNotifState(perm);
   };
 
-  const toggleSound = (next: boolean) => {
-    setSound(next);
-    saveSound(next);
-  };
-
   const changeWarnMin = (min: number) => {
     setWarnMin(min);
     saveWarnMin(min);
   };
 
-  const changeAlarmSound = (choice: AlarmSoundChoice) => {
-    setAlarmSound(choice);
-    saveSoundChoice(choice);
-  };
-
   const testSound = () => {
-    unlockAudio();
+    primeChimeCtx();
     playChime();
   };
 
+  /** Selects the break-over recording and previews it. */
+  const changeAlarmSound = (choice: AlarmSoundChoice) => {
+    if (choice === alarmSound) return;
+    setAlarmSoundState(choice);
+    setAlarmSound(choice);
+  };
+
+  /** Toggles a short, self-stopping preview of the real alarm. */
   const testAlarm = () => {
-    unlockAudio();
-    if (alarmTimer !== null) stopAlarm();
-    else startAlarm(alarmSound);
+    primeChimeCtx();
+    primeAlarmAudio();
+    ringPreview();
+  };
+
+  const toggleAlarmMute = () => {
+    const next = !getAlarmMuted();
+    setAlarmMuted(next);
+    setMutedState(next);
+    if (!next) {
+      primeChimeCtx();
+      primeAlarmAudio();
+    }
+  };
+
+  const changeAlarmVolume = (next: number) => {
+    setAlarmVolume(next);
+    setVolumeState(getAlarmVolume());
   };
 
   return {
@@ -676,8 +557,6 @@ export function useBreakTimer() {
     remaining,
     durationMs,
     endAt,
-    sound,
-    alarmSound,
     notifState,
     customDays,
     customHours,
@@ -687,15 +566,20 @@ export function useBreakTimer() {
     warnEffectiveMin,
     warned,
     reflectionPending,
+    alarmRinging,
+    alarmMuted,
+    alarmVolume,
     setCustomDays,
     setCustomHours,
     setCustomMinutes,
     setFinishTime,
     setWarnMin,
-    toggleSound,
-    changeAlarmSound,
     testSound,
     testAlarm,
+    changeAlarmSound,
+    alarmSound,
+    toggleAlarmMute,
+    changeAlarmVolume,
     completeReflection: cancel,
     requestNotifs,
     changeWarnMin,

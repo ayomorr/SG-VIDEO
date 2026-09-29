@@ -6,7 +6,7 @@ import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/marketing/theme-toggle";
 import { InstallButton } from "@/components/marketing/install-button";
-import { siteConfig } from "@/lib/site";
+import { siteConfig } from "@/lib/config/site";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {

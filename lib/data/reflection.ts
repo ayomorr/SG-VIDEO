@@ -42,9 +42,8 @@ export const REFLECTION_QUESTIONS: ReflectionQuestion[] = [
     id: "awareness",
     prompt: "Do you still want to continue scrolling?",
     options: [
-      { label: "Yes — I have something specific to do", value: "yes" },
-      { label: "Not really", value: "no" },
-      { label: "I'm not sure", value: "unsure" },
+      { label: "Yes", value: "yes" },
+      { label: "No", value: "no" },
     ],
   },
   {
@@ -93,8 +92,7 @@ export const REFLECTION_QUESTIONS: ReflectionQuestion[] = [
       "If you continue scrolling for another 30 minutes, will you be okay with that?",
     options: [
       { label: "Yes", value: "yes" },
-      { label: "Probably not", value: "no" },
-      { label: "I don't know", value: "unsure" },
+      { label: "No", value: "no" },
     ],
   },
 ];
@@ -217,7 +215,7 @@ export function analyzeReflections(log: ReflectionLogEntry[]): ReflectionStats {
     checkins: new Set(log.map((e) => Math.floor(e.at / 120_000))).size,
     intentions: tally(log, "intention"),
     moods: tally(log, "mood"),
-    reluctantPct: pressure("awareness", ["no", "unsure"]),
+    reluctantPct: pressure("awareness", ["no"]),
     wastedMoodPct: pressure("mood", ["wasted"]),
     chooseScrollPct: pressure("next", ["scroll"]),
     time,

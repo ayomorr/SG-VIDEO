@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { siteConfig } from "@/lib/site";
+import { siteConfig } from "@/lib/config/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,8 +20,8 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Scroll Detect — Scroll smarter. Live more.",
-    template: "%s — Scroll Detect",
+    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+    template: `%s — ${siteConfig.name}`,
   },
   description:
     "Scroll Detect helps you keep the evening you actually wanted. Log your own scrolling, learn what drags you into a spiral, and let a break timer do the remembering — private by design, no account needed.",
@@ -36,9 +36,9 @@ export const metadata: Metadata = {
     "quiet hours",
   ],
   openGraph: {
-    title: "Scroll Detect — Scroll smarter. Live more.",
-description:
-    "Your phone shouldn't steal your night. Scroll Detect gives your evenings back — no background tracking, no blocking, no account.",
+    title: `${siteConfig.name} — ${siteConfig.tagline}`,
+    description:
+      "Your phone shouldn't steal your night. Scroll Detect gives your evenings back — no background tracking, no blocking, no account.",
     url: siteConfig.url,
     siteName: siteConfig.name,
     type: "website",
@@ -48,13 +48,13 @@ description:
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Scroll Detect — Scroll smarter. Live more.",
+        alt: `${siteConfig.name} — ${siteConfig.tagline}`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Scroll Detect — Scroll smarter. Live more.",
+    title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description:
       "Your phone shouldn't steal your night. Scroll Detect gives your evenings back.",
     images: ["/og-image.png"],
@@ -65,11 +65,16 @@ description:
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Scroll Detect",
+    title: siteConfig.name,
     statusBarStyle: "black-translucent",
   },
+  // The phone mark, in every form the browsers and OSes ask for. All generated
+  // from app/icon.svg — see scripts/gen-icons.js.
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+    ],
     apple: [
       { url: "/apple-touch-icon-180.png", sizes: "180x180", type: "image/png" },
     ],
@@ -79,7 +84,7 @@ description:
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "mobile-web-app-capable": "yes",
     "theme-color": "#0B1B2B",
-    "application-name": "Scroll Detect",
+    "application-name": siteConfig.name,
   },
 };
 
@@ -93,7 +98,7 @@ export const viewport: Viewport = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "Scroll Detect",
+  name: siteConfig.name,
   url: siteConfig.url,
   description:
     "Anti-doomscrolling web app that helps adults take back their screen time. Session logging, doom-scroll detection, risk predictions, trigger insights, break timer with alarm, and on-device privacy.",
@@ -101,7 +106,7 @@ const jsonLd = {
   operatingSystem: "iOS, Android",
   offers: {
     "@type": "Offer",
-    name: "Scroll Detect",
+    name: siteConfig.name,
     price: "0",
     priceCurrency: "USD",
   },

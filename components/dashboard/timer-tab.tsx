@@ -17,6 +17,8 @@ import {
   PRESETS_MIN,
   WARN_OPTIONS_MIN,
   ALARM_SOUND_OPTIONS,
+  alarmSoundLabel,
+  type AlarmSoundChoice,
 } from "@/lib/hooks/use-break-timer";
 
 export function TimerTab({ timer }: { timer: BreakTimer }) {
@@ -25,8 +27,6 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
     remaining,
     durationMs,
     endAt,
-    sound,
-    alarmSound,
     notifState,
     customDays,
     customHours,
@@ -35,14 +35,17 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
     warnMin,
     warnEffectiveMin,
     warned,
+    alarmRinging,
+    alarmMuted,
+    alarmSound,
     setCustomDays,
     setCustomHours,
     setCustomMinutes,
     changeWarnMin,
-    toggleSound,
-    changeAlarmSound,
     testSound,
     testAlarm,
+    changeAlarmSound,
+    toggleAlarmMute,
     requestNotifs,
     start,
     pause,
@@ -122,9 +125,13 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
                 <button
                   key={min}
                   type="button"
+                  disabled={phase === "running"}
                   onClick={() => applyPreset(min)}
                   className={cn(
-                    "inline-flex h-10 cursor-pointer items-center rounded-full border px-4 text-sm font-medium transition-colors",
+                    "inline-flex h-10 items-center rounded-full border px-4 text-sm font-medium transition-colors",
+                    phase === "running"
+                      ? "cursor-not-allowed border-border/40 text-muted-foreground/40"
+                      : "cursor-pointer",
                     durationMs === min * 60_000 && phase === "idle"
                       ? "border-primary/50 bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
@@ -133,45 +140,31 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
                   {min}m
                 </button>
               ))}
-              <label className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={customDays}
-                  onChange={(e) => setCustomDays(Math.max(0, Number(e.target.value)))}
-                  onBlur={applyCustom}
-                  placeholder="0"
-                  inputMode="numeric"
-                  min={0}
-                  className="h-10 w-16 rounded-full border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/60"
-                />
-                <span className="text-sm text-muted-foreground">d</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={customHours}
-                  onChange={(e) => setCustomHours(Math.max(0, Number(e.target.value)))}
-                  onBlur={applyCustom}
-                  placeholder="0"
-                  inputMode="numeric"
-                  min={0}
-                  className="h-10 w-16 rounded-full border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/60"
-                />
-                <span className="text-sm text-muted-foreground">h</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={customMinutes}
-                  onChange={(e) => setCustomMinutes(Math.max(0, Number(e.target.value)))}
-                  onBlur={applyCustom}
-                  placeholder="0"
-                  inputMode="numeric"
-                  min={0}
-                  className="h-10 w-16 rounded-full border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/60"
-                />
-                <span className="text-sm text-muted-foreground">m</span>
-              </label>
+              {(
+                [
+                  ["Days", customDays, setCustomDays],
+                  ["Hours", customHours, setCustomHours],
+                  ["Minutes", customMinutes, setCustomMinutes],
+                ] as const
+              ).map(([label, value, onChange]) => (
+                <label key={label} className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={value}
+                    disabled={phase === "running"}
+                    onChange={(e) => onChange(Math.max(0, Number(e.target.value)))}
+                    onBlur={applyCustom}
+                    placeholder="0"
+                    inputMode="numeric"
+                    min={0}
+                    aria-label={`Custom break length in ${label.toLowerCase()}`}
+                    className="h-10 w-16 rounded-full border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-40"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {label.charAt(0).toLowerCase()}
+                  </span>
+                </label>
+              ))}
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -181,9 +174,10 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
               <input
                 type="time"
                 value={finishTime}
+                disabled={phase === "running"}
                 onChange={(e) => applyFinishTime(e.target.value)}
                 aria-label="Ring the alarm at a chosen clock time"
-                className="h-10 cursor-pointer rounded-full border border-border bg-background px-4 text-sm tabular-nums text-foreground outline-none transition-colors focus:border-primary/60"
+                className="h-10 cursor-pointer rounded-full border border-border bg-background px-4 text-sm tabular-nums text-foreground outline-none transition-colors focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-40"
               />
               <span className="text-sm text-muted-foreground">
                 → rings in {mmss(durationMs)}
@@ -230,72 +224,87 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
             Alarm settings
           </h3>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-xl border border-border/70 px-3 py-2">
+            <BellRing className="h-4 w-4 shrink-0 text-coral" aria-hidden="true" />
+            <span className="flex-1 text-sm font-medium text-foreground">
+              {alarmSoundLabel(alarmSound)}
+            </span>
             <button
               type="button"
-              onClick={() => toggleSound(!sound)}
-              className="flex flex-1 cursor-pointer items-center justify-between rounded-xl border border-border/70 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+              onClick={toggleAlarmMute}
+              aria-pressed={alarmMuted}
+              aria-label={alarmMuted ? "Unmute the alarm" : "Mute the alarm"}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border/70 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
             >
-              <span className="flex items-center gap-2">
-                {sound ? (
-                  <Volume2 className="h-4 w-4 text-primary" aria-hidden="true" />
-                ) : (
-                  <VolumeX className="h-4 w-4 text-primary" aria-hidden="true" />
-                )}
-                Sound chime
-              </span>
-              <span className={cn("relative h-6 w-11 rounded-full transition-colors", sound ? "bg-primary" : "bg-muted/40")}>
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
-                    sound ? "left-[22px]" : "left-0.5",
-                  )}
-                />
-              </span>
+              {alarmMuted ? (
+                <>
+                  <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
+                  Muted
+                </>
+              ) : (
+                <>
+                  <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  On
+                </>
+              )}
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-1 rounded-xl border border-border/70 p-1">
-            {ALARM_SOUND_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => changeAlarmSound(option.value)}
-                disabled={!sound}
-                className={cn(
-                  "cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  alarmSound === option.value && sound
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                  !sound && "opacity-40",
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <label className="flex items-center gap-3 rounded-xl border border-border/70 px-3 py-2">
+            <span className="text-sm font-medium text-foreground">Sound</span>
+            <select
+              value={alarmSound}
+              onChange={(e) => changeAlarmSound(e.target.value as AlarmSoundChoice)}
+              aria-label="Alarm sound"
+              className="flex-1 cursor-pointer rounded-lg border border-border/70 bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary/50"
+            >
+              {ALARM_SOUND_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <p className="text-xs text-muted-foreground">
-            {sound
-              ? "This is the sound that rings when the break is over."
-              : "Turn sound on to pick which alarm rings."}
+            The {alarmSoundLabel(alarmSound).toLowerCase()} recording starts the
+            instant your break ends and keeps looping until you answer — it is
+            designed to be impossible to miss, so it stays on unless you mute it
+            here. Pick a new sound and it plays straight away.
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={testSound}
+              title="A short 5-second jingle — not the alarm"
               className="shrink-0 cursor-pointer rounded-xl border border-border/70 px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
             >
-              Test chime
+              Preview chime
             </button>
             <button
               type="button"
               onClick={testAlarm}
-              className="shrink-0 cursor-pointer rounded-xl border border-coral/40 px-4 py-3 text-sm font-medium text-coral transition-colors hover:bg-coral/10"
+              aria-pressed={alarmRinging}
+              title={`Plays the exact ${alarmSoundLabel(alarmSound).toLowerCase()} that ends a real break`}
+              className={cn(
+                "shrink-0 cursor-pointer rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
+                alarmRinging
+                  ? "border-coral bg-coral/10 text-coral"
+                  : "border-coral/40 text-coral hover:bg-coral/10",
+              )}
             >
-              Test alarm
+              {alarmRinging
+                ? `Stop ${alarmSoundLabel(alarmSound).toLowerCase()}`
+                : `Preview ${alarmSoundLabel(alarmSound).toLowerCase()}`}
             </button>
           </div>
+          {alarmRinging && (
+            <p className="text-xs font-medium text-coral">
+              {alarmSoundLabel(alarmSound)} is ringing — tap Stop{" "}
+              {alarmSoundLabel(alarmSound).toLowerCase()}, or wait 10 seconds.
+            </p>
+          )}
 
           <div className="rounded-xl border border-border/70 px-4 py-3">
             <div className="flex items-center justify-between gap-2">
@@ -316,9 +325,10 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
               )}
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              The alarm rings through the installed app even if the tab isn&apos;t
-              focused. On iPhone, keep the app open on screen (or come back when
-              the break ends) — iOS won&apos;t let any website ring in the background.
+              Turn on notifications so the break still reaches you if you
+              switch away. On iPhone, keep the app open on screen — iOS
+              won&apos;t let any website ring in the background, and the app
+              asks to keep your screen awake while a break is running.
             </p>
           </div>
 
@@ -357,9 +367,12 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
             </p>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-            The timer is hardware real-time, so it stays accurate even if the
-            browser throttles the tab in the background. When it rings, the
-            service worker shows the alert.
+            The timer runs on the clock, not on counted ticks, so it stays
+            accurate even if the browser throttles the tab. The alarm holds
+            The alarm holds
+            three layers — the {alarmSoundLabel(alarmSound).toLowerCase()}{" "}
+            recording, a synthesised backup, and your notifications — so one
+            being blocked never means silence.
           </p>
         </div>
       </div>

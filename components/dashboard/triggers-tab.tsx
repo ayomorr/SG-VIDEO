@@ -10,7 +10,7 @@ import {
   topMoodCost,
 } from "@/lib/engine/triggers";
 import { formatDuration, percent } from "@/lib/engine/format";
-import { deleteSession } from "@/lib/store";
+import { deleteSession } from "@/lib/data/store";
 import { Card } from "@/components/dashboard/primitives";
 
 export function TriggersTab({ sessions }: { sessions: Session[] }) {

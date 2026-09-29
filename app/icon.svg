@@ -1,18 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
     <linearGradient id="sd-mark" x1="8" y1="8" x2="56" y2="56">
-      <stop stop-color="#00C2A8" />
-      <stop offset="0.5" stop-color="#2D6CDF" />
-      <stop offset="1" stop-color="#A79CFF" />
+      <stop stop-color="#00C2A8"/>
+      <stop offset="0.5" stop-color="#2D6CDF"/>
+      <stop offset="1" stop-color="#A79CFF"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0F2233"/>
+      <stop offset="1" stop-color="#0B1B2B"/>
     </linearGradient>
   </defs>
-  <rect x="6" y="6" width="52" height="52" rx="16" fill="#0B1B2B" />
-  <rect x="20.5" y="8" width="23" height="48" rx="6.5" fill="#0B1B2B" stroke="url(#sd-mark)" stroke-width="2" />
-  <rect x="23.5" y="12.5" width="17" height="39" rx="3.5" fill="#101F30" />
-  <path d="M32 20 V26" stroke="url(#sd-mark)" stroke-width="4" stroke-linecap="round" />
-  <path d="M27.5 25.5 L32 30.5 L36.5 25.5" stroke="url(#sd-mark)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <circle cx="32" cy="36.2" r="2.2" fill="url(#sd-mark)" />
-  <circle cx="32" cy="44.5" r="6" fill="#071321" />
-  <circle cx="32" cy="44.5" r="6" stroke="url(#sd-mark)" stroke-width="2" fill="none" opacity="0.9" />
-  <rect x="29.25" y="14.75" width="5.5" height="2" rx="1" fill="#F7F9FC" fill-opacity="0.85" />
+  <rect width="64" height="64" fill="url(#bg)"/>
+  <g transform="translate(32 32) scale(1) translate(-32 -32)">
+    <rect x="20.5" y="8" width="23" height="48" rx="6.5" fill="#0B1B2B" stroke="url(#sd-mark)" stroke-width="2"/>
+    <rect x="23.5" y="12.5" width="17" height="39" rx="3.5" fill="#101F30"/>
+    <path d="M32 20 V26" stroke="url(#sd-mark)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M27.5 25.5 L32 30.5 L36.5 25.5" stroke="url(#sd-mark)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="32" cy="36.2" r="2.2" fill="url(#sd-mark)"/>
+    <circle cx="32" cy="44.5" r="6" fill="#071321"/>
+    <circle cx="32" cy="44.5" r="6" stroke="url(#sd-mark)" stroke-width="2" fill="none" opacity="0.9"/>
+    <rect x="29.25" y="14.75" width="5.5" height="2" rx="1" fill="#F7F9FC" fill-opacity="0.85"/>
+  </g>
 </svg>

@@ -1,5 +1,5 @@
-const CACHE = "scrolldictive-v1";
-const NAV_CACHE = "scrolldictive-nav-v1";
+const CACHE = "scrolldictive-v2";
+const NAV_CACHE = "scrolldictive-nav-v2";
 self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
@@ -45,6 +45,19 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
+
+  // The break-over alarm loads this the moment a break ends. Caching it with
+  // stale-while-revalidate means a replaced siren keeps playing the old file
+  // forever, and an offline ring gets Response.error() — which is precisely
+  // the moment the user most needs to hear something. Go to the network, and
+  // let the synthesised fallback in lib/audio/alarm cover the offline case.
+  if (url.pathname.startsWith("/audio/")) return;
+
+  // Icons are versioned by content in the repo; serving a stale home-screen
+  // icon after a rebrand is the exact drift the icon generator prevents.
+  if (url.pathname.startsWith("/icon") || url.pathname.startsWith("/apple-touch-icon")) {
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(networkFirst(request));

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/marketing/reveal";
 import { Button } from "@/components/ui/button";
-import { DoomPhoneMark } from "@/components/logo";
+import { LogoMark } from "@/components/logo";
 
 function LogMock() {
   return (
@@ -13,7 +13,7 @@ function LogMock() {
         Dashboard · tonight
       </p>
       <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-muted px-3 py-2.5">
-        <DoomPhoneMark className="h-7 w-7" />
+        <LogoMark className="h-7 w-7" />
         <div className="flex-1">
           <p className="text-xs font-medium text-foreground">A social app</p>
           <p className="text-[10px] text-muted-foreground">22 min · 9:41p – 10:03p</p>

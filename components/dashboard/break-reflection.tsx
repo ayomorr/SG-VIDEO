@@ -11,7 +11,7 @@ import {
   type ReflectionQuestion,
   logReflectionAnswer,
   pickReflectionSession,
-} from "@/lib/reflection";
+} from "@/lib/data/reflection";
 
 export function BreakReflection({ timer }: { timer: BreakTimer }) {
   const { durationMs, completeReflection } = timer;

@@ -1,5 +1,12 @@
+/**
+ * Renders public/og-image.png. The phone mark here is the same geometry as
+ * app/icon.svg and components/logo.tsx — keep them in step, or share
+ * the constants with scripts/gen-icons.js.
+ *
+ *   node scripts/gen-og.js
+ */
 const { Resvg } = require("@resvg/resvg-js");
-const { readFileSync, writeFileSync, mkdirSync } = require("node:fs");
+const { readFileSync, writeFileSync, existsSync, mkdirSync } = require("node:fs");
 const path = require("node:path");
 
 const ROOT = process.cwd();
@@ -7,12 +14,35 @@ const fontDir = path.join(ROOT, "app", "og", "fonts");
 const outDir = path.join(ROOT, "public");
 mkdirSync(outDir, { recursive: true });
 
-const poppins600 = readFileSync(path.join(fontDir, "poppins-600.ttf"));
-const poppins500 = readFileSync(path.join(fontDir, "poppins-500.ttf"));
+/**
+ * Poppins is bundled with next/font, not checked in as a .ttf, so these files
+ * are usually absent. Fall back to system fonts rather than crashing — the
+ * previous version did a bare readFileSync and the script could not run at
+ * all.
+ */
+function loadFonts() {
+  return ["poppins-600.ttf", "poppins-500.ttf"]
+    .map((file) => path.join(fontDir, file))
+    .filter((file) => existsSync(file))
+    .map((file) => {
+      const b = readFileSync(file);
+      return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+    });
+}
+
+const fontBuffers = loadFonts();
+if (fontBuffers.length === 0) {
+  console.log("no bundled Poppins found, falling back to system fonts");
+}
 
 const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
+    <linearGradient id="sdMark" x1="8" y1="8" x2="56" y2="56">
+      <stop offset="0" stop-color="#00C2A8"/>
+      <stop offset="0.5" stop-color="#2D6CDF"/>
+      <stop offset="1" stop-color="#A79CFF"/>
+    </linearGradient>
     <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#00C2A8"/>
       <stop offset="0.6" stop-color="#2D6CDF"/>
@@ -48,24 +78,30 @@ const svg = `
     <text x="116" y="456" font-size="22" font-weight="500" fill="#00C2A8">Free · iOS &amp; Android · Private by design</text>
   </g>
 
-  <g>
-    <rect x="906" y="162" width="262" height="306" rx="52" fill="url(#badge)"/>
-    <rect x="987" y="220" width="100" height="66" rx="40" fill="#0B1B2B"/>
-    <rect x="1020" y="290" width="34" height="20" fill="#0B1B2B"/>
-    <rect x="987" y="314" width="100" height="66" rx="40" fill="#0B1B2B"/>
-    <rect x="918" y="424" width="238" height="46" rx="23" fill="#F7F9FC"/>
-    <text x="1037" y="457" font-family="Poppins" font-size="20" font-weight="600" fill="#062018" text-anchor="middle">scrolldictive.app</text>
+  <!-- The real brand mark, at 4.1x the 64-unit icon box. -->
+  <g transform="translate(906 162) scale(4.1)">
+    <rect x="6" y="6" width="52" height="52" rx="16" fill="#0B1B2B"/>
+    <rect x="20.5" y="8" width="23" height="48" rx="6.5" fill="#0B1B2B" stroke="url(#sdMark)" stroke-width="2"/>
+    <rect x="23.5" y="12.5" width="17" height="39" rx="3.5" fill="#101F30"/>
+    <path d="M32 20 V26" stroke="url(#sdMark)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M27.5 25.5 L32 30.5 L36.5 25.5" stroke="url(#sdMark)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="32" cy="36.2" r="2.2" fill="url(#sdMark)"/>
+    <circle cx="32" cy="44.5" r="6" fill="#071321"/>
+    <circle cx="32" cy="44.5" r="6" stroke="url(#sdMark)" stroke-width="2" fill="none" opacity="0.9"/>
+    <rect x="29.25" y="14.75" width="5.5" height="2" rx="1" fill="#F7F9FC" fill-opacity="0.85"/>
   </g>
+  <rect x="906" y="162" width="262" height="262" rx="16" fill="none" stroke="url(#badge)" stroke-width="4"/>
+  <text x="1037" y="482" font-family="Poppins" font-size="24" font-weight="600" fill="#F7F9FC" text-anchor="middle">scrolldictive.app</text>
 </svg>
 `;
 
 const resvg = new Resvg(svg, {
   font: {
-    fontBuffers: [poppins600, poppins500].map((b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)),
-    loadSystemFonts: false,
+    fontBuffers,
+    loadSystemFonts: fontBuffers.length === 0,
     defaultFontFamily: "Poppins",
   },
 });
 const png = resvg.render().asPng();
 writeFileSync(path.join(outDir, "og-image.png"), png);
-console.log("wrote", png.length, "bytes");
+console.log("wrote public/og-image.png", png.length, "bytes");

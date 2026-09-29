@@ -1,6 +1,6 @@
 import { ArrowUp } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { siteConfig } from "@/lib/site";
+import { siteConfig } from "@/lib/config/site";
 
 const columns = [
   {

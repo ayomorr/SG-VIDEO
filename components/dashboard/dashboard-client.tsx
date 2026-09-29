@@ -13,12 +13,12 @@ import {
   loadSessions,
   onSessionsChange,
   resetToDemo,
-} from "@/lib/store";
+} from "@/lib/data/store";
 import type { Session } from "@/lib/engine/types";
 import { useAwayTracker } from "@/lib/hooks/use-away-tracker";
 import { mmss, useBreakTimer } from "@/lib/hooks/use-break-timer";
-import { importSessionsFromQuery } from "@/lib/import-sessions";
-import { DoomPhoneMark } from "@/components/logo";
+import { importSessionsFromQuery } from "@/lib/data/import-sessions";
+import { LogoMark } from "@/components/logo";
 import { TABS, type TabId } from "@/components/dashboard/tabs";
 import { OverviewTab } from "@/components/dashboard/overview-tab";
 import { InsightsTab } from "@/components/dashboard/insights-tab";
@@ -88,7 +88,7 @@ export function DashboardClient() {
 
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-start gap-4">
-            <DoomPhoneMark className="hidden h-14 w-14 shrink-0 sm:block" />
+            <LogoMark className="hidden h-14 w-14 shrink-0 sm:block" />
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                 On-device AI

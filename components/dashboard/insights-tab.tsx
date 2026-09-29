@@ -15,7 +15,7 @@ import {
   type ReflectionStats,
   analyzeReflections,
   loadReflectionLog,
-} from "@/lib/reflection";
+} from "@/lib/data/reflection";
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;

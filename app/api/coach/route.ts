@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { coachReply, buildContextSummary } from "@/lib/engine/coach";
-import { isLlmConfigured, llmReply } from "@/lib/llm";
+import { isLlmConfigured, llmReply } from "@/lib/ai/llm";
 
 interface RequestBody {
   messages?: { role?: string; content?: string }[];

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Category, Session } from "@/lib/engine/types";
-import { addSession, loadSessions } from "@/lib/store";
+import { addSession, loadSessions } from "@/lib/data/store";
 
 const VALID_CATEGORIES: Category[] = [
   "social",
