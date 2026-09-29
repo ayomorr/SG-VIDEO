@@ -4,7 +4,6 @@ import {
   CalendarClock,
   Lightbulb,
   MessageCircle,
-  Rss,
   Timer,
 } from "lucide-react";
 
@@ -14,8 +13,7 @@ export type TabId =
   | "predict"
   | "triggers"
   | "coach"
-  | "timer"
-  | "live";
+  | "timer";
 
 export const TABS: {
   id: TabId;
@@ -60,11 +58,5 @@ export const TABS: {
     label: "Coach",
     icon: MessageCircle,
     blurb: "An honest companion that answers questions using your own history.",
-  },
-  {
-    id: "live",
-    label: "Live scroll",
-    icon: Rss,
-    blurb: "Real-time detection while you scroll in-app: catch drifting before it becomes a spiral.",
   },
 ];

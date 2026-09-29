@@ -16,6 +16,7 @@ import {
   mmss,
   PRESETS_MIN,
   WARN_OPTIONS_MIN,
+  ALARM_SOUND_OPTIONS,
 } from "@/lib/hooks/use-break-timer";
 
 export function TimerTab({ timer }: { timer: BreakTimer }) {
@@ -25,6 +26,7 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
     durationMs,
     endAt,
     sound,
+    alarmSound,
     notifState,
     customDays,
     customHours,
@@ -38,7 +40,9 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
     setCustomMinutes,
     changeWarnMin,
     toggleSound,
+    changeAlarmSound,
     testSound,
+    testAlarm,
     requestNotifs,
     start,
     pause,
@@ -249,12 +253,47 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
                 />
               </span>
             </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1 rounded-xl border border-border/70 p-1">
+            {ALARM_SOUND_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => changeAlarmSound(option.value)}
+                disabled={!sound}
+                className={cn(
+                  "cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  alarmSound === option.value && sound
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                  !sound && "opacity-40",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {sound
+              ? "This is the sound that rings when the break is over."
+              : "Turn sound on to pick which alarm rings."}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={testSound}
               className="shrink-0 cursor-pointer rounded-xl border border-border/70 px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
             >
-              Test
+              Test chime
+            </button>
+            <button
+              type="button"
+              onClick={testAlarm}
+              className="shrink-0 cursor-pointer rounded-xl border border-coral/40 px-4 py-3 text-sm font-medium text-coral transition-colors hover:bg-coral/10"
+            >
+              Test alarm
             </button>
           </div>
 

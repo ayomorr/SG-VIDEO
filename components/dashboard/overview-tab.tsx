@@ -7,14 +7,13 @@ import {
   CheckCircle2,
   Coffee,
   ShieldAlert,
-  Sparkles,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Session } from "@/lib/engine/types";
 import type { AwayTrackerState } from "@/lib/hooks/use-away-tracker";
 import { buildRuns, interventionForRun } from "@/lib/engine/detection";
-import { analyzeInsights, daySummary } from "@/lib/engine/insights";
+import { daySummary } from "@/lib/engine/insights";
 import { predictRisk } from "@/lib/engine/predict";
 import { formatDuration, formatHour } from "@/lib/engine/format";
 import {
@@ -36,14 +35,11 @@ export function OverviewTab({
   const today = useMemo(() => daySummary(sessions), [sessions]);
   const predictions = useMemo(() => predictRisk(sessions), [sessions]);
   const next = predictions[0] ?? null;
-  const insights = useMemo(() => analyzeInsights(sessions), [sessions]);
 
   const lastRun = runs[runs.length - 1] ?? null;
   const intervention = lastRun
     ? interventionForRun(lastRun, runs.slice(0, -1))
     : null;
-
-  const topInsight = insights[0] ?? null;
 
   const todayStart = useMemo(() => {
     const d = new Date();
@@ -209,27 +205,6 @@ export function OverviewTab({
           <p className="mt-4 text-sm text-muted-foreground">
             {today.date} · {today.runs} continuous scrolling run{today.runs === 1 ? "" : "s"}
           </p>
-        </Card>
-
-        <Card>
-          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
-            This week&apos;s standout insight
-          </div>
-          {topInsight ? (
-            <>
-              <h4 className="mt-2 font-heading text-lg font-semibold text-foreground">
-                {topInsight.title}
-              </h4>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {topInsight.body}
-              </p>
-            </>
-          ) : (
-            <p className="mt-2 text-sm text-muted-foreground">
-              Log a few sessions and the insight engine will start finding patterns.
-            </p>
-          )}
         </Card>
       </div>
 

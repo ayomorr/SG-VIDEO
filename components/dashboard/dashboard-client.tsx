@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Activity,
-  BarChart3,
   BellRing,
   CheckCircle2,
-  Clock,
   RefreshCw,
   Trash2,
 } from "lucide-react";
@@ -17,14 +14,11 @@ import {
   onSessionsChange,
   resetToDemo,
 } from "@/lib/store";
-import type { Severity, Session } from "@/lib/engine/types";
-import { buildRuns } from "@/lib/engine/detection";
-import { formatDuration } from "@/lib/engine/format";
+import type { Session } from "@/lib/engine/types";
 import { useAwayTracker } from "@/lib/hooks/use-away-tracker";
 import { mmss, useBreakTimer } from "@/lib/hooks/use-break-timer";
 import { importSessionsFromQuery } from "@/lib/import-sessions";
 import { DoomPhoneMark } from "@/components/logo";
-import { Card, SEVERITY_LABELS } from "@/components/dashboard/primitives";
 import { TABS, type TabId } from "@/components/dashboard/tabs";
 import { OverviewTab } from "@/components/dashboard/overview-tab";
 import { InsightsTab } from "@/components/dashboard/insights-tab";
@@ -32,7 +26,7 @@ import { PredictTab } from "@/components/dashboard/predict-tab";
 import { TriggersTab } from "@/components/dashboard/triggers-tab";
 import { CoachTab } from "@/components/dashboard/coach-tab";
 import { TimerTab } from "@/components/dashboard/timer-tab";
-import { LiveScrollTab } from "@/components/dashboard/live-scroll-tab";
+import { BreakReflection } from "@/components/dashboard/break-reflection";
 
 export function DashboardClient() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -58,27 +52,9 @@ export function DashboardClient() {
     return onSessionsChange(() => setSessions(loadSessions()));
   }, []);
 
-  const totalMs = useMemo(
-    () => sessions.reduce((sum, s) => sum + Math.max(0, s.endAt - s.startAt), 0),
-    [sessions],
-  );
-
-  const lastRunScore = useMemo(() => buildRuns(sessions).at(-1)?.score ?? 0, [sessions]);
-  const lastSeverity: Severity =
-    lastRunScore === 0
-      ? "calm"
-      : lastRunScore >= 75
-        ? "spiral"
-        : lastRunScore >= 55
-          ? "deep"
-          : lastRunScore >= 35
-            ? "drifting"
-            : lastRunScore >= 15
-              ? "mindful"
-              : "calm";
-
   return (
     <div className="relative min-h-screen overflow-hidden pb-40 pt-24 md:pt-32">
+      {timer.reflectionPending ? <BreakReflection timer={timer} /> : null}
       <div
         className="absolute -right-40 top-10 h-96 w-96 rounded-full bg-teal/15 blur-[120px]"
         aria-hidden="true"
@@ -185,41 +161,6 @@ export function DashboardClient() {
               </div>
             ) : null}
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {[
-                {
-                  label: "Sessions",
-                  value: String(sessions.length),
-                  icon: BarChart3,
-                },
-                {
-                  label: "Total logged time",
-                  value: formatDuration(totalMs),
-                  icon: Clock,
-                },
-                {
-                  label: "Latest run",
-                  value:
-                    sessions.length > 0 ? SEVERITY_LABELS[lastSeverity] : "—",
-                  icon: Activity,
-                },
-              ].map((stat) => (
-                <Card key={stat.label} className="flex items-center gap-4">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <stat.icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {stat.label}
-                    </p>
-                    <p className="font-heading text-xl font-semibold text-foreground">
-                      {stat.value}
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
             <div className="mt-8 flex flex-wrap items-center gap-2">
               {TABS.map(({ id, label, icon: Icon, featured }) => (
                 <button
@@ -258,7 +199,7 @@ export function DashboardClient() {
             >
               {tab
                 ? TABS.find((t) => t.id === tab)?.blurb
-                : "Your overview, live timeline, and tools — tap a tab to switch."}
+                : "Your overview and tools — tap a tab to switch."}
             </p>
 
             <div className="mt-6">
@@ -272,9 +213,6 @@ export function DashboardClient() {
                   {tab === "triggers" ? <TriggersTab sessions={sessions} /> : null}
                   {tab === "coach" ? <CoachTab sessions={sessions} /> : null}
                   {tab === "timer" ? <TimerTab timer={timer} /> : null}
-                  {tab === "live" ? (
-                    <LiveScrollTab onGoToTimer={() => setTab("timer")} />
-                  ) : null}
                 </>
               ) : (
                 <OverviewTab sessions={sessions} tracker={tracker} />

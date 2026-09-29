@@ -5,10 +5,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const STORE_KEY = "scrolldictive.timer.v1";
 const DURATION_PREF_KEY = "scrolldictive.timer.pref.v1";
 const SOUND_KEY = "scrolldictive.timer.sound.v1";
+const SOUND_CHOICE_KEY = "scrolldictive.timer.soundchoice.v1";
 const WARN_KEY = "scrolldictive.timer.warn.v1";
 
 export const PRESETS_MIN = [5, 10, 15, 25, 45];
 export const WARN_OPTIONS_MIN = [0, 1, 2, 5, 10, 15] as const;
+
+export type AlarmSoundChoice = "siren" | "screech" | "horn";
+
+export const ALARM_SOUND_OPTIONS: { value: AlarmSoundChoice; label: string }[] = [
+  { value: "siren", label: "Siren" },
+  { value: "screech", label: "Screech" },
+  { value: "horn", label: "Truck horn" },
+];
+
+const ALARM_FILES: Record<AlarmSoundChoice, string> = {
+  siren: "/audio/siren.mp3",
+  screech: "/audio/screech.mp3",
+  horn: "/audio/truck-horn.mp3",
+};
 
 export type BreakTimerPhase = "idle" | "running" | "done";
 
@@ -34,6 +49,21 @@ function loadSound(): boolean {
 function saveSound(on: boolean) {
   if (typeof localStorage === "undefined") return;
   localStorage.setItem(SOUND_KEY, on ? "1" : "0");
+}
+
+function loadSoundChoice(): AlarmSoundChoice {
+  if (typeof localStorage === "undefined") return "siren";
+  const stored = localStorage.getItem(SOUND_CHOICE_KEY);
+  return (ALARM_SOUND_OPTIONS as { value: AlarmSoundChoice }[]).some(
+    (o) => o.value === stored,
+  )
+    ? (stored as AlarmSoundChoice)
+    : "siren";
+}
+
+function saveSoundChoice(choice: AlarmSoundChoice) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(SOUND_CHOICE_KEY, choice);
 }
 
 function loadDurationPref(): number {
@@ -144,6 +174,60 @@ function scheduleTone(
   gain.connect(bus);
   osc.start(at);
   osc.stop(at + decay + 0.02);
+  return osc;
+}
+
+const ALARM_MAX_MS = 600_000;
+
+let alarmTimer: ReturnType<typeof setTimeout> | null = null;
+let alarmAudio: HTMLAudioElement | null = null;
+let alarmStartedAt = 0;
+
+function getAlarmAudio(choice: AlarmSoundChoice): HTMLAudioElement {
+  if (!alarmAudio) {
+    alarmAudio = new Audio();
+    alarmAudio.loop = true;
+  }
+  if (alarmAudio.src !== ALARM_FILES[choice]) {
+    alarmAudio.src = ALARM_FILES[choice];
+  }
+  return alarmAudio;
+}
+
+function startAlarm(choice: AlarmSoundChoice) {
+  stopAlarm();
+  try {
+    const audio = getAlarmAudio(choice);
+    audio.volume = 1;
+    audio.currentTime = 0;
+    alarmStartedAt = performance.now();
+    void audio.play().catch(() => {
+      // Blocked (e.g. iOS background) — the notification still covers it.
+    });
+    alarmTimer = setTimeout(() => {
+      if (performance.now() - alarmStartedAt >= ALARM_MAX_MS) {
+        stopAlarm();
+      }
+    }, ALARM_MAX_MS + 100);
+  } catch {
+    // Audio unavailable.
+  }
+}
+
+function stopAlarm() {
+  if (alarmTimer !== null) {
+    clearTimeout(alarmTimer);
+    alarmTimer = null;
+  }
+  if (alarmAudio) {
+    try {
+      alarmAudio.pause();
+      alarmAudio.currentTime = 0;
+    } catch {
+      // Audio unavailable.
+    }
+  }
+  silenceChime();
 }
 
 function playChime() {
@@ -317,6 +401,7 @@ export function useBreakTimer() {
   const [phase, setPhase] = useState<BreakTimerPhase>("idle");
   const [endAt, setEndAt] = useState(0);
   const [sound, setSound] = useState(loadSound);
+  const [alarmSound, setAlarmSound] = useState<AlarmSoundChoice>(loadSoundChoice);
   const [notifState, setNotifState] = useState<NotificationPermission>("default");
   const [customDays, setCustomDays] = useState(0);
   const [customHours, setCustomHours] = useState(0);
@@ -324,6 +409,7 @@ export function useBreakTimer() {
   const [finishTime, setFinishTime] = useState("");
   const [warnMin, setWarnMin] = useState(loadWarnMin);
   const [warned, setWarned] = useState(false);
+  const [reflectionPending, setReflectionPending] = useState(false);
   const finishedRef = useRef(false);
   const warnedRef = useRef(false);
   const bgWarnScheduledRef = useRef(false);
@@ -339,6 +425,7 @@ export function useBreakTimer() {
       setWarned(persisted.warned ?? false);
       if (persisted.endAt <= Date.now()) {
         setPhase("done");
+        setReflectionPending(true);
         finishedRef.current = true;
         savePersisted(null);
       } else {
@@ -365,6 +452,7 @@ export function useBreakTimer() {
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("touchstart", unlock);
       document.removeEventListener("visibilitychange", onVis);
+      stopAlarm();
     };
   }, []);
 
@@ -398,7 +486,8 @@ export function useBreakTimer() {
           finishedRef.current = true;
           savePersisted(null);
           setPhase("done");
-          if (sound) playChime();
+          setReflectionPending(true);
+          if (sound) startAlarm(alarmSound);
           vibratePattern();
           void sendNotification(
             "Scroll Detect — break's over",
@@ -409,7 +498,7 @@ export function useBreakTimer() {
       }
     }, 250);
     return () => window.clearInterval(id);
-  }, [phase, endAt, durationMs, sound, warnMs, fireHeadsUp]);
+  }, [phase, endAt, durationMs, sound, alarmSound, warnMs, fireHeadsUp]);
 
   // If the user returns to the app mid-break, catch up on the heads-up or end.
   useEffect(() => {
@@ -425,7 +514,8 @@ export function useBreakTimer() {
           finishedRef.current = true;
           savePersisted(null);
           setPhase("done");
-          if (sound) playChime();
+          setReflectionPending(true);
+          if (sound) startAlarm(alarmSound);
           vibratePattern();
           void sendNotification(
             "Scroll Detect — break's over",
@@ -437,7 +527,7 @@ export function useBreakTimer() {
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [phase, endAt, durationMs, sound, warnMs, fireHeadsUp]);
+  }, [phase, endAt, durationMs, sound, alarmSound, warnMs, fireHeadsUp]);
 
   const start = () => {
     if (durationMs <= 0) return;
@@ -445,6 +535,8 @@ export function useBreakTimer() {
     warnedRef.current = false;
     setWarned(false);
     bgWarnScheduledRef.current = false;
+    setReflectionPending(false);
+    stopAlarm();
     const target = Date.now() + durationMs;
     setEndAt(target);
     setRemaining(durationMs);
@@ -500,10 +592,11 @@ export function useBreakTimer() {
   };
 
   const cancel = () => {
-    silenceChime();
+    stopAlarm();
     finishedRef.current = false;
     warnedRef.current = false;
     setWarned(false);
+    setReflectionPending(false);
     const pref = loadDurationPref();
     setDurationMs(pref);
     setRemaining(pref);
@@ -562,9 +655,20 @@ export function useBreakTimer() {
     saveWarnMin(min);
   };
 
+  const changeAlarmSound = (choice: AlarmSoundChoice) => {
+    setAlarmSound(choice);
+    saveSoundChoice(choice);
+  };
+
   const testSound = () => {
     unlockAudio();
     playChime();
+  };
+
+  const testAlarm = () => {
+    unlockAudio();
+    if (alarmTimer !== null) stopAlarm();
+    else startAlarm(alarmSound);
   };
 
   return {
@@ -573,6 +677,7 @@ export function useBreakTimer() {
     durationMs,
     endAt,
     sound,
+    alarmSound,
     notifState,
     customDays,
     customHours,
@@ -581,13 +686,17 @@ export function useBreakTimer() {
     warnMin,
     warnEffectiveMin,
     warned,
+    reflectionPending,
     setCustomDays,
     setCustomHours,
     setCustomMinutes,
     setFinishTime,
     setWarnMin,
     toggleSound,
+    changeAlarmSound,
     testSound,
+    testAlarm,
+    completeReflection: cancel,
     requestNotifs,
     changeWarnMin,
     start,
