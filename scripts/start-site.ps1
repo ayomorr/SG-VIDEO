@@ -6,8 +6,10 @@ $ErrorActionPreference = "Stop"
 $dir = Split-Path -Parent $PSScriptRoot
 $env:NEXT_TELEMETRY_DISABLED = "1"
 $nextCli = Join-Path $dir "node_modules\next\dist\bin\next"
-$stdout = Join-Path $dir "site-server.log"
-$stderr = Join-Path $dir "site-server.err.log"
+$logDir = Join-Path $dir "logs"
+New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+$stdout = Join-Path $logDir "site-server.log"
+$stderr = Join-Path $logDir "site-server.err.log"
 
 function Write-Log($msg) {
   $line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $msg
