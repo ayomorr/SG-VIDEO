@@ -1,86 +1,71 @@
-"use client";
-
-import { useRef } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
-import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InstallButton } from "@/components/marketing/install-button";
 
 export function Hero() {
-  const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-  const blobY = useTransform(scrollYProgress, [0, 1], [0, 140]);
-  const textY = useTransform(scrollYProgress, [0, 1], [0, 70]);
-  const fade = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
-
   return (
-    <section
-      id="top"
-      ref={ref}
-      className="relative flex min-h-screen items-center overflow-hidden pb-24 pt-32 md:pt-36"
-    >
-      <div className="bg-grid-faint absolute inset-0 [mask-image:radial-gradient(70%_60%_at_50%_40%,black,transparent)]" />
-
-      <motion.div
+    <section id="top" className="relative overflow-hidden border-b border-border pb-20 pt-32 md:pb-28 md:pt-40">
+      <div
+        className="bg-grid-faint absolute inset-0 [mask-image:radial-gradient(70%_60%_at_50%_40%,black,transparent)]"
         aria-hidden="true"
-        style={reduce ? undefined : { y: blobY }}
-        className="absolute -right-40 top-10 h-[30rem] w-[30rem] rounded-full bg-teal/20 blur-[120px]"
       />
-      <motion.div
+      <div
+        className="absolute -right-40 top-0 h-[30rem] w-[30rem] animate-float rounded-full bg-teal/20 blur-[120px]"
         aria-hidden="true"
-        style={reduce ? undefined : { y: blobY }}
-        className="absolute -left-40 bottom-0 h-[26rem] w-[26rem] rounded-full bg-lavender/20 blur-[120px]"
+      />
+      <div
+        className="absolute -left-40 bottom-0 h-[26rem] w-[26rem] animate-float-slow rounded-full bg-lavender/20 blur-[120px]"
+        aria-hidden="true"
       />
 
       <div className="container relative z-10">
-        <motion.div
-          style={reduce ? undefined : { y: textY, opacity: fade }}
-          className="mx-auto"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="flex w-full max-w-3xl flex-col items-center gap-6 text-center"
-          >
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-soft" aria-hidden="true" />
-              Gentle support for the evenings you actually want back
-            </span>
+        <div className="flex flex-col items-start gap-7">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Free &middot; no account required
+          </p>
 
-            <h1 className="font-heading text-[clamp(2.6rem,6vw,4.2rem)] font-semibold leading-[1.05] tracking-tight text-foreground">
-              Your phone shouldn’t{" "}
-              <span className="text-gradient">steal your night.</span>
-            </h1>
+          <h1 className="max-w-[16ch] text-balance font-heading text-[clamp(2.5rem,5.5vw,4rem)] font-semibold leading-[1.02] tracking-[-0.03em] text-foreground">
+            You cannot snooze this alarm.
+          </h1>
 
-            <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Scroll Detect helps you take back your evenings without leaving
-              the apps you love. Set an intention, get a gentle nudge, and let
-              a quiet timer do the remembering for you.
-            </p>
+          <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
+            Set how long you want to be away. Scroll Detect warns you just before the
+            break is over, rings the moment it ends, and keeps ringing until you
+            have answered a few questions about why you started scrolling in the
+            first place.
+          </p>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <InstallButton />
-              <Button asChild size="xl" variant="outline">
-                <a href="/app">Open the AI app dashboard</a>
-              </Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button asChild size="xl" variant="outline">
+              <a href="/app">Open the app</a>
+            </Button>
+            <InstallButton />
+          </div>
+
+          <dl className="mt-4 grid w-full max-w-2xl grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-6 sm:grid-cols-3">
+            <div>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Warning
+              </dt>
+              <dd className="mt-1.5 text-sm text-foreground">
+                Minutes before the end
+              </dd>
             </div>
-
-            <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
-              Next step: install it, then click and start using the app
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </p>
-          </motion.div>
-        </motion.div>
+            <div>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Alarm
+              </dt>
+              <dd className="mt-1.5 text-sm text-foreground">
+                Siren, kept alive until dismissed
+              </dd>
+            </div>
+            <div>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Stops when
+              </dt>
+              <dd className="mt-1.5 text-sm text-foreground">You answer the questions</dd>
+            </div>
+          </dl>
+        </div>
       </div>
     </section>
   );

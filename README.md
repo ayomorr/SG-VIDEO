@@ -1,8 +1,10 @@
 # Scroll Detect
 
-> Scroll smarter. Live more.
+> An alarm that won't stop.
 
-Scroll Detect is an installable (PWA) web app that helps people break doomscrolling loops. It lets users log their own scrolling sessions — recommend never tracking them automatically — then applies on-device analytics to surface triggers, predict high-risk evenings, and run a gentle break timer that tells you when to close the feed.
+Scroll Detect is an installable (PWA) web app for breaking doomscrolling loops. Its centrepiece is a break timer with an alarm you cannot snooze: it warns you 15 minutes before a break ends, rings when it ends, and keeps ringing until you have answered a few questions about why you started scrolling.
+
+Alongside the timer it logs your own sessions — it never tracks them automatically — and runs on-device rules over that history to surface triggers and flag the hours most likely to go long.
 
 Everything about a user's browsing history stays out of the server. Sessions, insights, and timer state live only in the browser (localStorage / IndexedDB-backed store). The only server code is two small API routes.
 
@@ -32,7 +34,7 @@ app/
   manifest.ts           Web App Manifest
   icon.svg              Favicon / app icon (source of truth for scripts/gen-icons.js)
 components/
-  marketing/            Landing page components (hero, navbar, footer, FAQ, CTAs…)
+  marketing/            Landing page (hero, countdown clock, navbar, footer, FAQ, CTAs…)
   dashboard/            Dashboard UI (dashboard-client, timer-tab, per-tab views)
   ui/                   Reusable primitives (button, card, accordion)
   providers/            Client-side providers (theme, service worker registration)
@@ -60,7 +62,7 @@ Requirements: Node.js 18.18 (or newer) and npm.
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
+npm run dev        # http://localhost:3010
 ```
 
 Other scripts:

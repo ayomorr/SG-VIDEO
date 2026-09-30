@@ -24,7 +24,7 @@ export const TABS: {
 }[] = [
   {
     id: "timer",
-    label: "Break timer",
+    label: "Timer",
     icon: Timer,
     featured: true,
     blurb: "Set a break first, then go scroll. This is the main tool: start it before any scroll — the alarm rings to pull you back.",

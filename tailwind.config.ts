@@ -81,6 +81,12 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
         heading: ["var(--font-poppins)", "Poppins", "system-ui", "sans-serif"],
+        mono: [
+          "var(--font-geist-mono)",
+          "ui-monospace",
+          "SFMono-Regular",
+          "monospace",
+        ],
       },
       borderRadius: {
         "4xl": "2rem",
@@ -95,12 +101,8 @@ const config: Config = {
         "inner-ring": "inset 0 0 0 1px rgba(247, 249, 252, 0.06)",
       },
       backgroundImage: {
-        "gradient-brand": "linear-gradient(120deg, #00C2A8 0%, #2D6CDF 55%, #A79CFF 120%)",
-        "gradient-hero": "radial-gradient(60rem 30rem at 80% -10%, rgba(0,194,168,0.16), transparent 60%), radial-gradient(45rem 26rem at 10% 110%, rgba(167,156,255,0.14), transparent 60%)",
         "radial-teal": "radial-gradient(circle, rgba(0,194,168,0.28), transparent 70%)",
         "radial-lavender": "radial-gradient(circle, rgba(167,156,255,0.3), transparent 70%)",
-        "grid-faint":
-          "linear-gradient(rgb(var(--foreground) / 0.035) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--foreground) / 0.035) 1px, transparent 1px)",
       },
       keyframes: {
         float: {
@@ -115,21 +117,6 @@ const config: Config = {
           "0%, 100%": { opacity: "1", transform: "scale(1)" },
           "50%": { opacity: "0.6", transform: "scale(0.96)" },
         },
-        shield: {
-          "0%": { opacity: "0", transform: "scale(0.7)" },
-          "18%": { opacity: "1", transform: "scale(1.06)" },
-          "30%": { transform: "scale(1)" },
-          "70%": { opacity: "1", transform: "scale(1)" },
-          "88%": { opacity: "0", transform: "scale(0.92)" },
-          "100%": { opacity: "0", transform: "scale(0.7)" },
-        },
-        dim: {
-          "0%": { opacity: "0" },
-          "18%": { opacity: "0.85" },
-          "70%": { opacity: "0.85" },
-          "88%": { opacity: "0" },
-          "100%": { opacity: "0" },
-        },
         breathe: {
           "0%, 100%": { transform: "rotate(-4deg) scale(0.96)", opacity: "0.7" },
           "50%": { transform: "rotate(4deg) scale(1.04)", opacity: "1" },
@@ -137,10 +124,6 @@ const config: Config = {
         tick: {
           "0%": { transform: "rotate(0deg)" },
           "100%": { transform: "rotate(360deg)" },
-        },
-        shimmer: {
-          "0%": { transform: "translateX(-100%)" },
-          "100%": { transform: "translateX(100%)" },
         },
         "fade-in": {
           "0%": { opacity: "0", transform: "translateY(4px)" },
@@ -161,10 +144,7 @@ const config: Config = {
         float: "float 7s ease-in-out infinite",
         "float-slow": "float-slow 9s ease-in-out infinite",
         "pulse-soft": "pulse-soft 3.5s ease-in-out infinite",
-        shield: "shield 7s cubic-bezier(0.22, 1, 0.36, 1) infinite",
-        dim: "dim 7s ease-in-out infinite",
         breathe: "breathe 14s ease-in-out infinite",
-        shimmer: "shimmer 2.6s linear infinite",
         "fade-in": "fade-in 0.4s ease-out",
       },
       transitionTimingFunction: {

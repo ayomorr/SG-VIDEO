@@ -5,13 +5,13 @@ export function SectionHeading({
   eyebrow,
   title,
   description,
-  align = "center",
+  align = "left",
   className,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
-  align?: "center" | "left";
+  align?: "left" | "center";
   className?: string;
 }) {
   return (
@@ -23,11 +23,11 @@ export function SectionHeading({
       )}
     >
       {eyebrow ? (
-        <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+        <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
           {eyebrow}
         </span>
       ) : null}
-      <h2 className="max-w-3xl font-heading text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-[2.75rem] md:leading-[1.1]">
+      <h2 className="max-w-3xl text-balance font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground sm:text-4xl md:text-[2.5rem] md:leading-[1.08]">
         {title}
       </h2>
       {description ? (

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
+import localFont from "next/font/local";
 import { Providers } from "@/components/providers";
 import { siteConfig } from "@/lib/config/site";
 import "./globals.css";
@@ -17,6 +18,17 @@ const poppins = Poppins({
   display: "swap",
 });
 
+/**
+ * Bundled in app/fonts and used for the timer digits and small stat figures. A
+ * monospace face with true tabular figures is what makes a countdown read as a
+ * number rather than as shifting text.
+ */
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
@@ -24,21 +36,20 @@ export const metadata: Metadata = {
     template: `%s — ${siteConfig.name}`,
   },
   description:
-    "Scroll Detect helps you keep the evening you actually wanted. Log your own scrolling, learn what drags you into a spiral, and let a break timer do the remembering — private by design, no account needed.",
+    "An alarm you cannot snooze. Scroll Detect warns you just before your break is over, rings when it ends, and keeps ringing until you have answered three questions about why you started scrolling.",
   applicationName: siteConfig.name,
   keywords: [
+    "break reminder",
     "doomscrolling",
-    "screen time",
-    "app blocker",
+    "focus timer",
     "digital wellbeing",
-    "reduce screen time",
-    "scroll less",
-    "quiet hours",
+    "screen break reminder",
+    "phone alarm",
   ],
   openGraph: {
     title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description:
-      "Your phone shouldn't steal your night. Scroll Detect gives your evenings back — no background tracking, no blocking, no account.",
+      "Set a break. It warns you just before it's over, rings when the break ends, and will not stop until you have answered three questions.",
     url: siteConfig.url,
     siteName: siteConfig.name,
     type: "website",
@@ -56,7 +67,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description:
-      "Your phone shouldn't steal your night. Scroll Detect gives your evenings back.",
+      "Set a break. It warns you just before it's over, rings when the break ends, and will not stop until you have answered three questions.",
     images: ["/og-image.png"],
   },
   alternates: {
@@ -101,7 +112,7 @@ const jsonLd = {
   name: siteConfig.name,
   url: siteConfig.url,
   description:
-    "Anti-doomscrolling web app that helps adults take back their screen time. Session logging, doom-scroll detection, risk predictions, trigger insights, break timer with alarm, and on-device privacy.",
+    "An alarm for taking breaks that cannot be snoozed: a heads-up before the end, and an alarm that keeps ringing until the reflection is answered. Sessions, insights and timer state stay in the browser.",
   applicationCategory: "HealthAndFitnessApplication",
   operatingSystem: "iOS, Android",
   offers: {
@@ -110,11 +121,8 @@ const jsonLd = {
     price: "0",
     priceCurrency: "USD",
   },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: siteConfig.rating.value.toString(),
-    ratingCount: siteConfig.rating.count.toString(),
-  },
+  // No `aggregateRating` here on purpose. There are no real reviews to report,
+  // and invented rating markup is a manual-action risk, not a ranking trick.
 };
 
 export default function RootLayout({
@@ -125,7 +133,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${poppins.variable} bg-background font-sans text-foreground antialiased`}
+        className={`${inter.variable} ${poppins.variable} ${geistMono.variable} bg-background font-sans text-foreground antialiased`}
       >
         <a
           href="#main"

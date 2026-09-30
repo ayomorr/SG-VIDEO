@@ -1,35 +1,56 @@
-import { Sparkles } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
+import { InstallButton } from "@/components/marketing/install-button";
 
 export function FinalCta() {
   return (
-    <section className="py-12 md:py-16" aria-label="Get started">
-      <div className="container">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-[2.5rem] border border-primary/20 bg-gradient-brand px-8 py-16 text-center md:px-16 md:py-24">
-            <div
-              className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-white/10 blur-3xl"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-navy-950/25 blur-3xl"
-              aria-hidden="true"
-            />
-            <div className="bg-grid-faint absolute inset-0 opacity-40" aria-hidden="true" />
+    <section
+      className="relative overflow-hidden py-20 md:py-28"
+      aria-label="Get started"
+    >
+      <div
+        className="absolute -left-40 top-0 h-[28rem] w-[28rem] animate-float rounded-full bg-lavender/15 blur-[120px]"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute -right-40 bottom-0 h-[24rem] w-[24rem] animate-float-slow rounded-full bg-teal/15 blur-[120px]"
+        aria-hidden="true"
+      />
 
-            <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-6">
-              <p className="font-heading text-[clamp(2rem,4.5vw,3rem)] font-semibold leading-tight text-white">
-                Your evenings are waiting.
+      <div className="container relative z-10">
+        <Reveal>
+          <div className="grid gap-10 border-t border-border pt-14 lg:grid-cols-[1.2fr_1fr] lg:gap-20">
+            <div className="flex flex-col items-start gap-6">
+              <h2 className="max-w-lg text-balance font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground sm:text-4xl md:text-[2.5rem] md:leading-[1.08]">
+                Set the break now. Decide at the end of it.
+              </h2>
+              <p className="max-w-md leading-relaxed text-muted-foreground">
+                That is the whole deal. No account, nothing stored on a server,
+                and an alarm that is still owed to you tomorrow morning if you
+                ignore it tonight.
               </p>
-              <p className="max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
-                Install Scroll Detect from any browser — no App Store, no account.
-                A dashboard, a coach, and a break timer that give your focus back.
-              </p>
-              <p className="flex items-center gap-1.5 text-xs text-white/60">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                No store. No account. No ads.
-              </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <InstallButton />
+              </div>
             </div>
+
+            <dl className="grid content-start gap-px self-start bg-border">
+              {[
+                ["Cost", "Free, no account"],
+                ["Platform", "Any modern browser"],
+                ["Access", "Add to home screen"],
+                ["Data", "Stays in this browser"],
+              ].map(([term, detail]) => (
+                <div
+                  key={term}
+                  className="flex items-baseline justify-between gap-4 bg-background py-4"
+                >
+                  <dt className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                    {term}
+                  </dt>
+                  <dd className="text-right text-sm text-foreground">{detail}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </Reveal>
       </div>

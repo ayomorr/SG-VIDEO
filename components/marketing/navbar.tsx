@@ -21,29 +21,28 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50">
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur-md transition-shadow duration-300",
+        scrolled || open ? "border-b border-border" : "border-b border-transparent",
+      )}
+    >
       <div className="container">
-        <nav
-          aria-label="Main"
-          className={cn(
-            "mt-3 flex h-16 items-center justify-between gap-3 rounded-full px-4 transition-all duration-300 md:px-5",
-            scrolled || open ? "glass shadow-card" : "border border-transparent",
-          )}
-        >
+        <nav aria-label="Main" className="flex h-16 items-center justify-between gap-4">
           <a
             href="#top"
-            className="flex items-center gap-2 rounded-full focus-visible:outline-2"
+            className="focus-visible:outline-2"
             aria-label="Scroll Detect home"
           >
-            <Logo iconClass="h-8 w-8" />
+            <Logo iconClass="h-7 w-7" />
           </a>
 
-          <ul className="hidden items-center gap-1 md:flex">
+          <ul className="hidden items-center gap-7 md:flex">
             {siteConfig.nav.map((item) => (
               <li key={item.href}>
                 <a
                   href={item.href}
-                  className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {item.label}
                 </a>
@@ -71,25 +70,25 @@ export function Navbar() {
         <AnimatePresence>
           {open ? (
             <motion.div
-              initial={{ opacity: 0, y: -12 }}
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="glass mt-2 overflow-hidden rounded-3xl p-3 shadow-soft md:hidden"
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden border-t border-border pb-4 md:hidden"
             >
-              <ul className="flex flex-col gap-1">
+              <ul className="flex flex-col">
                 {siteConfig.nav.map((item) => (
                   <li key={item.href}>
                     <a
                       href={item.href}
                       onClick={() => setOpen(false)}
-                      className="block rounded-2xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                      className="block border-b border-border py-3.5 text-sm text-foreground"
                     >
                       {item.label}
                     </a>
                   </li>
                 ))}
-                <li className="pt-2">
+                <li className="pt-4">
                   <InstallButton size="lg" fullWidth />
                 </li>
               </ul>

@@ -28,14 +28,14 @@ export function StickyMobileBar() {
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-x-0 bottom-0 z-40 md:hidden"
         >
-          <div className="glass border-t border-white/10 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 shadow-soft">
+          <div className="border-t border-border bg-background/95 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-md">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-heading text-sm font-semibold text-foreground">
-                  Get Scroll Detect
+                  Set a break
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Free · No ads · Private by design
+                  Free · No account · No ads
                 </p>
               </div>
               <InstallButton size="md" placement="top" />

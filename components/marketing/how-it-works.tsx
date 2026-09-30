@@ -1,174 +1,145 @@
-import type { ReactNode } from "react";
-import { Brain, ClipboardList, Timer } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/marketing/reveal";
-import { Button } from "@/components/ui/button";
-import { LogoMark } from "@/components/logo";
 
-function LogMock() {
-  return (
-    <div className="mx-auto w-full max-w-[220px] rounded-2xl border border-border bg-card p-4 shadow-card">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-        Dashboard · tonight
-      </p>
-      <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-muted px-3 py-2.5">
-        <LogoMark className="h-7 w-7" />
-        <div className="flex-1">
-          <p className="text-xs font-medium text-foreground">A social app</p>
-          <p className="text-[10px] text-muted-foreground">22 min · 9:41p – 10:03p</p>
-        </div>
-        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
-          Logged
-        </span>
-      </div>
-      <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
-        <span>Feeling before: so-so</span>
-        <span>After: drained</span>
-      </div>
-    </div>
-  );
-}
-
-function InsightMock() {
-  return (
-    <div className="mx-auto w-full max-w-[220px] rounded-2xl border border-border bg-card p-4 shadow-card">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-          Latest run
-        </p>
-        <span className="rounded-full bg-lavender/15 px-2 py-0.5 text-[10px] font-semibold text-lavender">
-          Drifting
-        </span>
-      </div>
-      <p className="mt-3 text-xs leading-relaxed text-foreground">
-        You scroll longest in the 9–11p window, usually after work stress.
-      </p>
-      <div className="mt-3 rounded-xl bg-muted px-3 py-2.5">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Risk prediction
-        </p>
-        <p className="mt-1 text-xs text-foreground">
-          High risk Thu 8–10pm · 72% chance of a long run
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function TimerMock() {
-  return (
-    <div className="relative mx-auto w-full max-w-[220px] rounded-2xl border border-primary/40 bg-gradient-to-b from-primary/10 to-transparent p-4 shadow-glow-teal">
-      <span
-        className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-glow-teal"
-        aria-hidden="true"
-      >
-        The main feature
-      </span>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-        Break timer
-      </p>
-      <p className="mt-3 text-center font-heading text-4xl font-bold tabular-nums tracking-tight text-foreground sm:text-5xl">
-        07:42
-      </p>
-      <div className="mt-4 space-y-1.5 rounded-xl bg-muted px-3 py-2.5 text-[10px] text-muted-foreground">
-        <p className="flex justify-between">
-          <span>Alarm</span>
-          <span className="font-medium text-foreground">10:07 pm</span>
-        </p>
-        <p className="flex justify-between">
-          <span>Heads-up before end</span>
-          <span className="font-medium text-foreground">09:52 pm</span>
-        </p>
-      </div>
-      <div className="mt-4">
-        <Button asChild className="w-full">
-          <a href="/app">
-            Start a break timer
-            <Timer className="h-5 w-5" aria-hidden="true" />
-          </a>
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-const steps: {
-  icon: typeof Brain;
-  title: string;
-  caption: string;
-  mock: () => ReactNode;
-  featured?: boolean;
-}[] = [
+/**
+ * Every claim here is something the code actually does, and the specifics are
+ * the point — a generic three-step explainer would say "set a reminder" where
+ * the truth is "three independent alarm layers re-asserted every 800ms".
+ */
+const beats: { title: string; body: string; facts?: string[] }[] = [
   {
-    icon: ClipboardList,
-    title: "Log your scroll",
-    caption:
-      "Two taps in the dashboard — the app, the minutes, how it left you. There's no background scanner; you decide what counts.",
-    mock: () => <LogMock />,
+    title: "Set the break",
+    body: "Pick a preset, type a length, or tell it when you want to be finished. The timer takes a wake lock on that tap, so the countdown still reaches zero after the screen dims or the tab is backgrounded. A chime and a notification land before the break runs out, so you are not cut off mid-sentence. On a short break the lead time is trimmed rather than dropped, so the warning can never land on top of the alarm.",
   },
   {
-    icon: Brain,
-    title: "Spot the pattern",
-    caption:
-      "On-device analysis scores every run, explains the why in insights, and predicts your riskiest hours before you reach them.",
-    mock: () => <InsightMock />,
+    title: "The alarm rings",
+    body: "Three independent layers have to fail before it goes quiet. If one dies mid-ring it is restarted, and if you close the tab while it is ringing, it is still owed when you come back.",
   },
   {
-    icon: Timer,
-    title: "Take a real break",
-    caption:
-      "Set a countdown that heads-up you before the end and rings when it's done — an alarm for stepping away, not a block.",
-    mock: () => <TimerMock />,
-    featured: true,
+    title: "Answer, and it stops",
+    body: "The alarm does not stop because you reached for it. It stops because you answered one to three questions drawn at random \u2014 one of them asks whether another 30 minutes is really okay. Then the timer resets and you are back to where you started.",
+    facts: [
+      "1\u20133 questions, drawn at random",
+      "\u201cWill you be okay with another 30 minutes?\u201d",
+      "Answers feed the pattern analysis",
+      "No lock, no fullscreen, no forced pause",
+    ],
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section id="how" className="scroll-mt-24 py-20 md:py-28">
-      <div className="container">
+    <section
+      id="how"
+      className="relative scroll-mt-24 overflow-hidden border-b border-border py-20 md:py-28"
+    >
+      <div
+        className="absolute -left-32 top-10 h-[26rem] w-[26rem] animate-float-slow rounded-full bg-lavender/15 blur-[120px]"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute -right-32 -bottom-16 h-[22rem] w-[22rem] animate-float rounded-full bg-teal/15 blur-[120px]"
+        aria-hidden="true"
+      />
+
+      <div className="container relative z-10">
         <SectionHeading
           eyebrow="How it works"
-          title="Three quiet steps. One clearer feed."
-          description="No background tracking, no blocks. Scroll Detect shows you your pattern and lets you act on it."
+          title="What runs while you are away."
+          description="Three things happen after you press start, and the last two are the reason this is not a reminder app."
         />
 
-        <div className="relative grid gap-6 md:grid-cols-3">
-          <div
-            className="absolute left-0 right-0 top-12 hidden h-px bg-gradient-to-r from-transparent via-border to-transparent md:block"
-            aria-hidden="true"
-          />
-          {steps.map((step, i) => (
-            <Reveal key={step.title} delay={i * 0.14} className="relative">
-              <div className={cn(
-                "flex h-full flex-col rounded-3xl border bg-card p-8 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-soft",
-                step.featured ? "border-primary/40 ring-1 ring-primary/20" : "border-border",
-              )}>
-                <div className="mb-8 flex items-center gap-4">
-                  <span className={cn(
-                    "relative flex h-12 w-12 items-center justify-center rounded-2xl border text-primary",
-                    step.featured
-                      ? "border-primary/50 bg-primary/20 shadow-glow-teal"
-                      : "border-primary/30 bg-primary/10",
-                  )}>
-                    <step.icon className="h-6 w-6" aria-hidden="true" />
-                  </span>
-                  <span className="font-heading text-sm font-semibold text-muted-foreground">
-                    Step {i + 1}
-                  </span>
-                </div>
-                <div className="mb-6">{step.mock()}</div>
-                <h3 className="font-heading text-xl font-semibold text-foreground">
-                  {step.title}
-                </h3>
-                <p className="mt-2 leading-relaxed text-muted-foreground">
-                  {step.caption}
-                </p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        <table className="w-full border-collapse text-left">
+          <caption className="sr-only">
+            What happens after you press start, in three steps.
+          </caption>
+          <thead className="hidden md:table-header-group">
+            <tr className="border-y border-border">
+              <th
+                scope="col"
+                className="w-16 py-3 pr-4 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                No.
+              </th>
+              <th
+                scope="col"
+                className="w-52 py-3 pr-6 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                Step
+              </th>
+              <th
+                scope="col"
+                className="py-3 pr-6 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                What happens
+              </th>
+              <th
+                scope="col"
+                className="w-64 py-3 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                In detail
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {beats.map((beat, i) => (
+              <tr
+                key={beat.title}
+                className="block border-b border-border py-6 last:border-b-0 md:table-row md:py-0"
+              >
+                <td className="block pb-1 md:table-cell md:w-16 md:py-7 md:pr-4 md:align-top">
+                  <Reveal delay={i * 0.06}>
+                    <span className="font-mono text-sm tabular-nums text-muted-foreground">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  </Reveal>
+                </td>
+                <td className="block pb-2 md:table-cell md:w-52 md:py-7 md:pr-6 md:align-top">
+                  <Reveal delay={i * 0.06}>
+                    <h3 className="font-heading text-xl font-semibold tracking-[-0.02em] text-foreground">
+                      {beat.title}
+                    </h3>
+                  </Reveal>
+                </td>
+                <td className="block md:table-cell md:py-7 md:pr-6 md:align-top">
+                  <Reveal delay={i * 0.06}>
+                    <p className="max-w-2xl leading-relaxed text-muted-foreground">
+                      {beat.body}
+                    </p>
+                  </Reveal>
+                </td>
+                <td className="block pt-4 md:table-cell md:w-64 md:py-7 md:align-top">
+                  {beat.facts ? (
+                    <Reveal delay={i * 0.06}>
+                      <ul className="flex flex-col gap-2.5 border-l border-border pl-5">
+                        {beat.facts.map((fact) => (
+                          <li
+                            key={fact}
+                            className="flex gap-2.5 font-mono text-[12px] leading-relaxed text-muted-foreground"
+                          >
+                            <span aria-hidden="true" className="text-primary">
+                              &rarr;
+                            </span>
+                            {fact}
+                          </li>
+                        ))}
+                      </ul>
+                    </Reveal>
+                  ) : null}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <Reveal>
+          <div className="mt-12 flex flex-col items-start gap-4">
+            <p className="max-w-xl leading-relaxed text-muted-foreground">
+              A web page cannot pause the apps on your phone, and this does not
+              pretend otherwise. It does not lock your screen either.
+            </p>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

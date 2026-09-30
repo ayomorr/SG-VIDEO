@@ -4,12 +4,18 @@ import { siteConfig } from "@/lib/config/site";
 
 const columns = [
   {
-    title: "Get started",
-    links: [{ label: "AI app dashboard", href: "/app" }],
+    title: "Use it",
+    links: [
+      { label: "Open the app", href: "/app" },
+      { label: "Add to home", href: "/#top" },
+    ],
   },
   {
-    title: "Learn",
-    links: [{ label: "How it works", href: "#how" }, { label: "FAQ", href: "#faq" }],
+    title: "Read",
+    links: [
+      { label: "How it works", href: "#how" },
+      { label: "Questions", href: "#faq" },
+    ],
   },
   {
     title: "Contact",
@@ -21,16 +27,20 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative border-t border-border/60 pb-28 pt-16 md:pb-16">
-      <div className="container">
+    <footer className="relative overflow-hidden border-t border-border pb-28 pt-14 md:pb-12">
+      <div
+        className="absolute -left-24 -top-16 h-[18rem] w-[18rem] animate-float-slow rounded-full bg-teal/10 blur-[100px]"
+        aria-hidden="true"
+      />
+
+      <div className="container relative z-10">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_2fr]">
           <div className="flex flex-col gap-5">
             <a href="#top" aria-label="Scroll Detect home" className="inline-flex w-fit">
               <Logo />
             </a>
             <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-              {siteConfig.tagline}. The gentle guard for people who want their
-              evenings back.
+              An alarm you cannot snooze, and nothing else.
             </p>
           </div>
 
@@ -40,7 +50,7 @@ export function Footer() {
           >
             {columns.map((column) => (
               <div key={column.title}>
-                <h3 className="font-heading text-sm font-semibold text-foreground">
+                <h3 className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   {column.title}
                 </h3>
                 <ul className="mt-4 flex flex-col gap-3">
@@ -48,7 +58,7 @@ export function Footer() {
                     <li key={link.label}>
                       <a
                         href={link.href}
-                        className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                       >
                         {link.label}
                       </a>
@@ -60,16 +70,13 @@ export function Footer() {
           </nav>
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-6 border-t border-border/60 pt-8 sm:flex-row">
+        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-border pt-8 sm:flex-row sm:items-center">
           <p className="text-xs text-muted-foreground">
-            © {year} Scroll Detect. All rights reserved.
-          </p>
-          <p className="font-heading text-xs font-medium text-muted-foreground/80">
-            Made for people who want their evenings back.
+            &copy; {year} Scroll Detect.
           </p>
           <a
             href="#top"
-            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+            className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
           >
             Back to top
             <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />

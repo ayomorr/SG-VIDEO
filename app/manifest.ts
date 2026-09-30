@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: `${siteConfig.name} — ${siteConfig.tagline}`,
     short_name: siteConfig.name,
     description:
-      "Scroll Detect helps you keep the evening you actually wanted. Log your own scrolling, learn what drags you into a spiral, and let a break timer do the remembering.",
+      "Scroll Detect helps you keep the evening you actually wanted. Log your own scrolling, learn what drags you into a spiral, and let the alarm do the remembering.",
     id: "/app",
     start_url: "/app",
     scope: "/",

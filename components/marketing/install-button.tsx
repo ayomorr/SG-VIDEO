@@ -60,10 +60,11 @@ export function InstallButton({
     );
   }
 
-  // New users and users who have uninstalled get "Install". Once the app is on
-  // the device this branch returns "Open the app" instead, so the button always
-  // does something useful.
-  const label = open ? "Hide steps" : "Install";
+  // New users and users who have uninstalled get "Add to home". Once the app is
+  // on the device this branch returns "Open the app" instead, so the button
+  // always does something useful. The steps still say "Install" because that is
+  // the literal wording of the browser menu the user has to find.
+  const label = open ? "Hide steps" : "Add to home";
 
   return (
     <div className={cn("relative", fullWidth && "w-full", className)}>

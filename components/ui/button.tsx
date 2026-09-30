@@ -9,7 +9,6 @@ type Variant =
   | "secondary"
   | "outline"
   | "ghost"
-  | "glass"
   | "coral";
 type Size = "sm" | "md" | "lg" | "xl";
 
@@ -24,8 +23,6 @@ const variants: Record<Variant, string> = {
   outline:
     "border border-border bg-transparent text-foreground hover:-translate-y-0.5 hover:border-primary/60 hover:text-primary",
   ghost: "text-foreground hover:bg-muted",
-  glass:
-    "glass text-foreground hover:-translate-y-0.5 hover:border-primary/50 hover:text-primary",
   coral:
     "bg-destructive text-destructive-foreground shadow-[0_10px_30px_-8px_rgba(255,107,90,0.4)] hover:-translate-y-0.5",
 };

@@ -21,8 +21,6 @@
   --destructive-foreground: 46 14 10;
   --border: 11 27 43;
   --ring: 0 194 168;
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-border: rgba(11, 27, 43, 0.08);
   --nav-bg: rgba(247, 249, 252, 0.7);
   --page-dots: rgba(11, 27, 43, 0.06);
 }
@@ -46,8 +44,6 @@
   --destructive-foreground: 30 8 6;
   --border: 148 163 184;
   --ring: 0 194 168;
-  --glass-bg: rgba(11, 27, 43, 0.55);
-  --glass-border: rgba(247, 249, 252, 0.12);
   --nav-bg: rgba(11, 27, 43, 0.6);
   --page-dots: rgba(247, 249, 252, 0.07);
 }
@@ -60,19 +56,6 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
-  }
-
-  /*
-   * The screen freeze. Set on <html> by lib/focus/freeze.ts once the break
-   * reflection is finished, and removed when the countdown reaches zero.
-   * `!important` is required because the dashboard sets `overflow` inline on
-   * the scrolling container, which would otherwise win.
-   */
-  html.freeze-locked,
-  html.freeze-locked body {
-    overflow: hidden !important;
-    overscroll-behavior: none;
-    touch-action: none;
   }
 
   body {
@@ -98,25 +81,11 @@
 }
 
 @layer utilities {
-  .glass {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(18px) saturate(150%);
-    -webkit-backdrop-filter: blur(18px) saturate(150%);
-  }
-
-  .text-gradient {
-    background: linear-gradient(100deg, #00C2A8 10%, #2D6CDF 55%, #A79CFF 95%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .text-gradient-cool {
-    background: linear-gradient(100deg, #A79CFF 0%, #00C2A8 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  /* The countdown ring: a depleting arc, never a growing fill. */
+  .clock-arc {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: butt;
   }
 
   .bg-grid-faint {
@@ -126,16 +95,18 @@
     background-size: 44px 44px;
   }
 
+  .clock-tick-label {
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
-  }
-
-  .shadow-edge {
-    box-shadow: inset 0 1px 0 rgb(var(--foreground) / 0.04);
   }
 }
 
