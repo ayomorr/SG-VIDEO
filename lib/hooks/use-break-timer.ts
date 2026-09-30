@@ -23,13 +23,25 @@ import {
   subscribeAlarm,
 } from "@/lib/audio/alarm";
 import { playChime, playHeadsUpChime, primeChimeCtx } from "@/lib/audio/chime";
+import {
+  FREEZE_DEFAULT_MINUTES,
+  FREEZE_MAX_MINUTES,
+  FREEZE_MIN_MINUTES,
+  getFreezeRemainingMs,
+  isFreezing,
+  resumeFreezeIfPending,
+  startFreeze,
+  subscribeFreeze,
+} from "@/lib/focus/freeze";
 
 const STORE_KEY = "scrolldictive.timer.v1";
 const DURATION_PREF_KEY = "scrolldictive.timer.pref.v1";
 const WARN_KEY = "scrolldictive.timer.warn.v1";
+const FREEZE_KEY = "scrolldictive.timer.freeze.v1";
 
 export const PRESETS_MIN = [5, 10, 15, 25, 45];
 export const WARN_OPTIONS_MIN = [0, 1, 2, 5, 10, 15] as const;
+export { FREEZE_MIN_MINUTES, FREEZE_MAX_MINUTES, FREEZE_DEFAULT_MINUTES };
 
 export type { AlarmSoundChoice };
 export { ALARM_SOUND_OPTIONS, alarmSoundLabel };
@@ -76,6 +88,23 @@ function loadWarnMin(): number {
 function saveWarnMin(min: number) {
   if (typeof localStorage === "undefined") return;
   localStorage.setItem(WARN_KEY, String(min));
+}
+
+function loadFreezeMin(): number {
+  if (typeof localStorage === "undefined") return FREEZE_DEFAULT_MINUTES;
+  const raw = Number(localStorage.getItem(FREEZE_KEY));
+  if (!Number.isFinite(raw)) return FREEZE_DEFAULT_MINUTES;
+  return clampFreezeMin(raw);
+}
+
+function clampFreezeMin(min: number): number {
+  if (!Number.isFinite(min)) return FREEZE_DEFAULT_MINUTES;
+  return Math.min(FREEZE_MAX_MINUTES, Math.max(FREEZE_MIN_MINUTES, Math.round(min)));
+}
+
+function saveFreezeMin(min: number) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(FREEZE_KEY, String(clampFreezeMin(min)));
 }
 
 function loadPersisted(): PersistedTimer | null {
@@ -239,6 +268,23 @@ export function useBreakTimer() {
   const [alarmMuted, setMutedState] = useState(getAlarmMuted);
   const [alarmVolume, setVolumeState] = useState(getAlarmVolume);
   const [alarmSound, setAlarmSoundState] = useState<AlarmSoundChoice>(getAlarmSound);
+
+  const [freezeMin, setFreezeMin] = useState(loadFreezeMin);
+  const [freezing, setFreezing] = useState(isFreezing());
+  const [freezeRemainingMs, setFreezeRemainingMs] = useState(getFreezeRemainingMs);
+
+  // The freeze is deliberately outside the timer state machine: it outlives the
+  // break, the reflection, and a page refresh. Subscribing here rather than in
+  // the overlay keeps the remaining time readable by anything that needs it.
+  useEffect(() => {
+    resumeFreezeIfPending();
+    setFreezing(isFreezing());
+    setFreezeRemainingMs(getFreezeRemainingMs());
+    return subscribeFreeze(() => {
+      setFreezing(isFreezing());
+      setFreezeRemainingMs(getFreezeRemainingMs());
+    });
+  }, []);
 
   const warnMs = resolveWarnMs(warnMin * 60_000, durationMs);
   const warnEffectiveMin = Math.round(warnMs / 60_000);
@@ -552,6 +598,23 @@ export function useBreakTimer() {
     setVolumeState(getAlarmVolume());
   };
 
+  const changeFreezeMin = (min: number) => {
+    const next = clampFreezeMin(min);
+    setFreezeMin(next);
+    saveFreezeMin(next);
+  };
+
+  /**
+   * Finishing the reflection stops the alarm as usual, then hands the screen
+   * to the freeze for the duration chosen when the break was set up. There is
+   * no way to skip it from here — that is the entire point — so the warning is
+   * shown up front, beside the duration input.
+   */
+  const completeReflection = () => {
+    cancel();
+    startFreeze(freezeMin * 60_000);
+  };
+
   return {
     phase,
     remaining,
@@ -580,7 +643,11 @@ export function useBreakTimer() {
     alarmSound,
     toggleAlarmMute,
     changeAlarmVolume,
-    completeReflection: cancel,
+    completeReflection,
+    freezeMin,
+    changeFreezeMin,
+    freezing,
+    freezeRemainingMs,
     requestNotifs,
     changeWarnMin,
     start,

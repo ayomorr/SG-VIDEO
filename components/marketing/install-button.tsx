@@ -60,13 +60,10 @@ export function InstallButton({
     );
   }
 
-  const label = installEvent
-    ? "Install Scroll Detect"
-    : open
-      ? "Hide steps"
-      : isIOS
-        ? "Add to Home Screen"
-        : "Install app";
+  // New users and users who have uninstalled get "Install". Once the app is on
+  // the device this branch returns "Open the app" instead, so the button always
+  // does something useful.
+  const label = open ? "Hide steps" : "Install";
 
   return (
     <div className={cn("relative", fullWidth && "w-full", className)}>

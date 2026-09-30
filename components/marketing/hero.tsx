@@ -71,10 +71,7 @@ export function Hero() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <InstallButton />
               <Button asChild size="xl" variant="outline">
-                <a href="/app">
-                  Open the AI app dashboard after installation
-                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
-                </a>
+                <a href="/app">Open the AI app dashboard</a>
               </Button>
             </div>
 

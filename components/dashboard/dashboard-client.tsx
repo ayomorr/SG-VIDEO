@@ -27,6 +27,7 @@ import { TriggersTab } from "@/components/dashboard/triggers-tab";
 import { CoachTab } from "@/components/dashboard/coach-tab";
 import { TimerTab } from "@/components/dashboard/timer-tab";
 import { BreakReflection } from "@/components/dashboard/break-reflection";
+import { ScreenFreeze } from "@/components/dashboard/screen-freeze";
 
 export function DashboardClient() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -55,6 +56,7 @@ export function DashboardClient() {
   return (
     <div className="relative min-h-screen overflow-hidden pb-40 pt-24 md:pt-32">
       {timer.reflectionPending ? <BreakReflection timer={timer} /> : null}
+      {timer.freezing ? <ScreenFreeze /> : null}
       <div
         className="absolute -right-40 top-10 h-96 w-96 rounded-full bg-teal/15 blur-[120px]"
         aria-hidden="true"

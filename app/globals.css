@@ -62,6 +62,19 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /*
+   * The screen freeze. Set on <html> by lib/focus/freeze.ts once the break
+   * reflection is finished, and removed when the countdown reaches zero.
+   * `!important` is required because the dashboard sets `overflow` inline on
+   * the scrolling container, which would otherwise win.
+   */
+  html.freeze-locked,
+  html.freeze-locked body {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     text-rendering: optimizeLegibility;

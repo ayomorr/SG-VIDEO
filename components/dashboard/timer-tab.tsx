@@ -1,11 +1,13 @@
 "use client";
 
 import {
+  AlertTriangle,
   Bell,
   BellRing,
   Pause,
   Play,
   RotateCcw,
+  Snowflake,
   Timer as TimerIcon,
   Volume2,
   VolumeX,
@@ -19,6 +21,8 @@ import {
   ALARM_SOUND_OPTIONS,
   alarmSoundLabel,
   type AlarmSoundChoice,
+  FREEZE_MIN_MINUTES,
+  FREEZE_MAX_MINUTES,
 } from "@/lib/hooks/use-break-timer";
 
 export function TimerTab({ timer }: { timer: BreakTimer }) {
@@ -45,6 +49,8 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
     testSound,
     testAlarm,
     changeAlarmSound,
+    freezeMin,
+    changeFreezeMin,
     toggleAlarmMute,
     requestNotifs,
     start,
@@ -218,8 +224,65 @@ export function TimerTab({ timer }: { timer: BreakTimer }) {
         )}
       </div>
 
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-5 shadow-card">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3 rounded-2xl border border-coral/30 bg-coral/[0.04] p-5">
+            <div className="flex items-center gap-2">
+              <Snowflake className="h-4 w-4 shrink-0 text-coral" aria-hidden="true" />
+              <h3 className="font-heading text-sm font-semibold text-foreground">
+                Screen freeze
+              </h3>
+            </div>
+
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              How long the screen stays locked once you finish answering the
+              break questions. Set it now, because you cannot change it when the
+              alarm goes off.
+            </p>
+
+            <label
+              className={cn(
+                "flex items-center gap-3 rounded-xl border border-border/70 bg-background px-3 py-2",
+                phase === "running" && "opacity-60",
+              )}
+            >
+              <span className="text-sm font-medium text-foreground">Freeze for</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={FREEZE_MIN_MINUTES}
+                max={FREEZE_MAX_MINUTES}
+                value={freezeMin}
+                disabled={phase === "running"}
+                onChange={(e) => changeFreezeMin(Number(e.target.value))}
+                onBlur={() => changeFreezeMin(freezeMin)}
+                aria-label="Screen freeze duration in minutes"
+                className="w-16 bg-transparent font-heading text-lg font-semibold tabular-nums text-foreground outline-none disabled:cursor-not-allowed"
+              />
+              <span className="text-sm text-muted-foreground">
+                minute{freezeMin === 1 ? "" : "s"}
+              </span>
+              <span className="ml-auto text-[11px] tabular-nums text-muted-foreground/80">
+                min {FREEZE_MIN_MINUTES}
+              </span>
+            </label>
+
+            <div className="flex items-start gap-3 rounded-2xl border-2 border-coral/50 bg-coral/10 px-4 py-3.5">
+              <AlertTriangle
+                className="mt-0.5 h-4 w-4 shrink-0 text-coral"
+                aria-hidden="true"
+              />
+              <p className="text-sm font-semibold leading-relaxed text-coral">
+                Read this before you start. When the alarm goes off, your screen
+                freezes for{" "}
+                <span className="tabular-nums">{freezeMin} minute</span>
+                {freezeMin === 1 ? "" : "s"} — the time you chose here. There is
+                no skip button and no way to shorten it once it starts. It ends
+                by itself when the countdown finishes.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-5 shadow-card">
           <h3 className="font-heading text-sm font-semibold text-foreground">
             Alarm settings
           </h3>
