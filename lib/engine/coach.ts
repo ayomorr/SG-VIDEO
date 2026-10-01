@@ -2,10 +2,18 @@ import type { CoachMessage, TriggerPattern } from "@/lib/engine/types";
 import { MOOD_LABELS, alternativeFor } from "@/lib/engine/catalog";
 import { formatDuration } from "@/lib/engine/format";
 
+export interface CoachProfile {
+  name?: string;
+  /** Only the current month's goals — history is never sent. */
+  goals?: string[];
+  monthName?: string;
+}
+
 export interface CoachInput {
   messages: { role: "user" | "assistant"; content: string }[];
   context?: string;
   triggers?: TriggerPattern[];
+  profile?: CoachProfile;
 }
 
 export interface CoachResult {
@@ -13,8 +21,29 @@ export interface CoachResult {
   via: "rules";
 }
 
-function greetingReply(): string {
-  return `Hey — I'm here, and I'm not here to judge a single minute of it.\n\nTell me what's pulling you in right now. Bored? Switched off? "Just one more rewatch"? Name it, and we'll pick the shortest possible ask — a 5-minute break, not a life overhaul.`;
+function cleanName(name?: string): string {
+  return (name ?? "").trim().slice(0, 40);
+}
+
+function cleanGoals(goals?: string[]): string[] {
+  return (goals ?? []).map((g) => g.trim()).filter(Boolean).slice(0, 5);
+}
+
+function greetingReply(name?: string): string {
+  const who = cleanName(name);
+  const opener = who ? `Hey ${who} —` : "Hey —";
+  return `${opener} I'm here, and I'm not here to judge a single minute of it.\n\nTell me what's pulling you in right now. Bored? Switched off? "Just one more rewatch"? Name it, and we'll pick the shortest possible ask — a 5-minute break, not a life overhaul.`;
+}
+
+function goalReply(name?: string, goals?: string[], monthName?: string): string {
+  const who = cleanName(name);
+  const list = cleanGoals(goals);
+  if (list.length === 0) {
+    return `You haven't set any goals for this month yet, so I'll keep it simple: one session, one honest check-in.\n\nAdd your goals and I'll start connecting what you do here to what you're actually trying to finish.`;
+  }
+  const when = monthName ?? "this month";
+  const line = list.map((g) => `"${g}"`).join(", ");
+  return `Here's what you told me you're working on in ${when}: ${line}.\n\n${who ? `Scrolling rarely wins against those, ${who} — ` : "Scrolling rarely wins against those — "}but it's rarely about willpower. It's usually about what you're avoiding for the next 15 minutes.\n\nPick the smallest thing on that list you'd actually enjoy doing, and tell me which one. I'll hold you to it.`;
 }
 
 function boredReply(triggers: TriggerPattern[]): string {
@@ -26,7 +55,7 @@ function boredReply(triggers: TriggerPattern[]): string {
     : "";
   const alternatives = (triggers.find((t) => t.mood === "bored")?.suggestion ??
     alternativeFor("bored", 3).join(". ")) as string;
-  return `Boredom is the #1 door into a scroll loop — ${line}\n\nWhen that itch starts, borrow 5 minutes, not 50:\n\n- ${alternatives.replace(/\n/g, "\n- ")}\n\nWant me to check back with you in 5 minutes?`;
+  return `Boredom is the #1 door into a scroll loop.${line ? ` ${line}` : ""}\n\nWhen that itch starts, borrow 5 minutes, not 50:\n\n- ${alternatives.replace(/\n/g, "\n- ")}\n\nWant me to check back with you in 5 minutes?`;
 }
 
 function urgeReply(
@@ -72,22 +101,27 @@ function thanksReply(): string {
   return `Anytime. The work is genuinely yours — I'm just the mirror with a timer.\n\nOne small thing for today: pick the single shortest scroll you can manage right now, and notice you did the choosing. That's the whole game.`;
 }
 
-function fallbackReply(lastUser: string): string {
+function fallbackReply(lastUser: string, goals: string[], name: string): string {
   const alt = alternativeFor("bored", 3).join(", ");
-  return `I hear that — "${lastUser.trim()}" isn't a small thing to sit with, but you don't have to solve it on the couch with a feed.\n\nFor the next five minutes, consider: ${alt}. And if you want, tell me what's really under it. No lecture, I promise.`;
+  const nudge = goals.length
+    ? ` And if you want one concrete move instead, pick the smallest step on "${goals[0]}" and do it before you come back.`
+    : "";
+  return `I hear that — "${lastUser.trim()}" isn't a small thing to sit with, but you don't have to solve it on the couch with a feed.${name ? ` ${name},` : ""} for the next five minutes, consider: ${alt}.${nudge} Tell me what's really under it. No lecture, I promise.`;
 }
 
 export function coachReply(input: CoachInput): CoachResult {
-  const { messages, context, triggers } = input;
+  const { messages, context, triggers, profile } = input;
   const lastUser = [...messages]
     .reverse()
     .find((m) => m.role === "user")?.content ?? "";
   const text = lastUser.toLowerCase();
   const triggerContext = triggers ?? [];
+  const name = cleanName(profile?.name);
+  const goals = cleanGoals(profile?.goals);
 
   let reply: string;
   if (/\b(hi|hey|hello|yo|sup)\b/.test(text) && text.length < 25) {
-    reply = greetingReply();
+    reply = greetingReply(name);
   } else if (/(bored|nothing to do|boring)/.test(text)) {
     reply = boredReply(triggerContext);
   } else if (
@@ -98,6 +132,11 @@ export function coachReply(input: CoachInput): CoachResult {
     /(why|tell me).*(scroll|use|feed|phone)|why do i|explain/i.test(text)
   ) {
     reply = whyReply(triggerContext);
+  } else if (
+    /(my goals?|this month|goals for|priorit)/.test(text) ||
+    (goals.length > 0 && /\bwhat should i do\b/.test(text))
+  ) {
+    reply = goalReply(name, goals, profile?.monthName);
   } else if (/(stop|quit|how do i|help me|tips?|advice)/.test(text)) {
     reply = stopReply();
   } else if (/(sleep|bed|late|night|insomnia|tired)/.test(text)) {
@@ -107,7 +146,7 @@ export function coachReply(input: CoachInput): CoachResult {
   } else if (/(scroll|feed|app|pick up|phone)/.test(text)) {
     reply = urgeReply(triggerContext, context);
   } else {
-    reply = fallbackReply(lastUser);
+    reply = fallbackReply(lastUser, goals, name);
   }
 
   return { reply, via: "rules" };
@@ -116,6 +155,7 @@ export function coachReply(input: CoachInput): CoachResult {
 /** Builds the compact context summary sent to the LLM / used by rules. */
 export function buildContextSummary(
   sessions: { app: string; startAt: number; endAt: number }[],
+  profile?: CoachProfile,
 ): string {
   const now = Date.now();
   const week = sessions.filter((s) => now - s.startAt <= 7 * 24 * 60 * 60_000);
@@ -133,7 +173,16 @@ export function buildContextSummary(
   if (total > 0) parts.push(`${formatDuration(total)} of scrolling in the last 7 days`);
   if (topApp) parts.push(`mostly in ${topApp}`);
   if (lateNight.length > 0) parts.push(`${lateNight.length} sessions started after 9 PM`);
-  return parts.length ? `${parts.join(", ")}.` : "No recent scroll data.";
+  const habits = parts.length ? `${parts.join(", ")}.` : "No recent scroll data.";
+
+  const name = cleanName(profile?.name);
+  const goals = cleanGoals(profile?.goals);
+  if (goals.length === 0) {
+    return name ? `${habits} The user goes by ${name}.` : habits;
+  }
+  const when = profile?.monthName ?? "this month";
+  const list = goals.map((g) => `"${g}"`).join(", ");
+  return `${habits}\nUser's name is ${name || "not set"}. Your goals for ${when}: ${list}.`;
 }
 
 export type { CoachMessage };

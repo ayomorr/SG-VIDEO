@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     template: `%s — ${siteConfig.name}`,
   },
   description:
-    "An alarm you cannot snooze. Scroll Detect warns you just before your break is over, rings when it ends, and keeps ringing until you have answered three questions about why you started scrolling.",
+    "An alarm you cannot snooze. Scroll Detect warns you just before your break is over, rings when it ends, and keeps ringing until you have answered at least four questions about why you started scrolling.",
   applicationName: siteConfig.name,
   keywords: [
     "break reminder",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description:
-      "Set a break. It warns you just before it's over, rings when the break ends, and will not stop until you have answered three questions.",
+      "Set a break. It warns you just before it's over, rings when the break ends, and will not stop until you have answered at least four questions.",
     url: siteConfig.url,
     siteName: siteConfig.name,
     type: "website",
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description:
-      "Set a break. It warns you just before it's over, rings when the break ends, and will not stop until you have answered three questions.",
+      "Set a break. It warns you just before it's over, rings when the break ends, and will not stop until you have answered at least four questions.",
     images: ["/og-image.png"],
   },
   alternates: {

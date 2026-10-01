@@ -79,15 +79,24 @@ export function LogoMark({ className }: { className?: string }) {
 export function Logo({
   className,
   iconClass,
+  slogan,
 }: {
   className?: string;
   iconClass?: string;
+  slogan?: string;
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <LogoMark className={iconClass} />
-      <span className="font-heading text-lg font-semibold tracking-tight text-foreground">
-        Scroll Detect
+      <span className="flex flex-col items-start leading-none">
+        <span className="font-heading text-lg font-semibold tracking-tight text-foreground">
+          Scroll Detect
+        </span>
+        {slogan ? (
+          <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {slogan}
+          </span>
+        ) : null}
       </span>
     </span>
   );

@@ -17,6 +17,7 @@ import {
 import type { Session } from "@/lib/engine/types";
 import { useAwayTracker } from "@/lib/hooks/use-away-tracker";
 import { mmss, useBreakTimer } from "@/lib/hooks/use-break-timer";
+import { useGoalProfile } from "@/lib/hooks/use-goal-profile";
 import { importSessionsFromQuery } from "@/lib/data/import-sessions";
 import { LogoMark } from "@/components/logo";
 import { TABS, type TabId } from "@/components/dashboard/tabs";
@@ -37,6 +38,7 @@ export function DashboardClient() {
     null,
   );
   const tracker = useAwayTracker();
+  const profile = useGoalProfile();
 
   useEffect(() => {
     const result = importSessionsFromQuery();
@@ -94,7 +96,9 @@ export function DashboardClient() {
                 On-device AI
               </p>
               <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-                Your smart scrolling dashboard
+                {profile.name
+                  ? `${profile.name}\u2019s smart scrolling dashboard`
+                  : "Your smart scrolling dashboard"}
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
                 Detects haunted patterns, intervenes with context, and gives you a

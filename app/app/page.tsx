@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
+import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
 
 export const metadata: Metadata = {
   title: "Smart dashboard",
@@ -11,5 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default function AppPage() {
-  return <DashboardClient />;
+  return (
+    <OnboardingGate>
+      <DashboardClient />
+    </OnboardingGate>
+  );
 }

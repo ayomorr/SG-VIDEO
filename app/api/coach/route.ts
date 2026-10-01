@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { coachReply, buildContextSummary } from "@/lib/engine/coach";
+import {
+  buildContextSummary,
+  coachReply,
+  type CoachProfile,
+} from "@/lib/engine/coach";
 import { isLlmConfigured, llmReply } from "@/lib/ai/llm";
 
 interface RequestBody {
   messages?: { role?: string; content?: string }[];
   context?: string;
+  profile?: CoachProfile;
 }
 
 const SYSTEM_PROMPT = [
@@ -15,7 +20,26 @@ const SYSTEM_PROMPT = [
   "Suggest small, doable 5-minute breaks and healthier alternatives, never shame.",
   "Never invent statistics about the user's actual screen time.",
   "End replies with a single micro-ask (one tiny action the user can take now).",
+  "If a name is provided, use it naturally and sparingly — once or twice at most, not in every line.",
+  "If goals for the current month are provided, connect your advice to them and ask what a small step toward one would be.",
+  "Only ever use the goals listed for the current month. Never assume goals from other months still apply.",
+  "Never shame, guilt-trip, threaten, or moralize. Be honest and a little challenging, like a friend who respects you.",
+  "You are an assistant, not a human. Don't claim human experiences or feelings.",
 ].join("\n");
+
+/** Keeps the request honest about its own shape before it reaches a model. */
+function readProfile(value: CoachProfile | undefined): CoachProfile {
+  const name = typeof value?.name === "string" ? value.name.trim().slice(0, 40) : "";
+  const goals = Array.isArray(value?.goals)
+    ? value.goals
+        .map((g) => (typeof g === "string" ? g.trim() : ""))
+        .filter(Boolean)
+        .slice(0, 5)
+    : [];
+  const monthName =
+    typeof value?.monthName === "string" ? value.monthName.slice(0, 20) : undefined;
+  return { name, goals, monthName };
+}
 
 export async function POST(request: Request) {
   let body: RequestBody;
@@ -43,8 +67,9 @@ export async function POST(request: Request) {
 
   // Cap what the API trusts to keep responses cheap and on-message.
   const recent = messages.slice(-12);
+  const profile = readProfile(body.profile);
   const context = typeof body.context === "string" ? body.context : "";
-  const summary = context || buildContextSummary([]);
+  const summary = context || buildContextSummary([], profile);
 
   if (isLlmConfigured()) {
     const llmMessages = [
@@ -57,6 +82,6 @@ export async function POST(request: Request) {
     }
   }
 
-  const result = coachReply({ messages: recent, context: summary });
+  const result = coachReply({ messages: recent, context: summary, profile });
   return NextResponse.json({ ok: true, ...result }, { status: 200 });
 }

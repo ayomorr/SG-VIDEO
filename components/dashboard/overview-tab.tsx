@@ -6,12 +6,16 @@ import {
   CalendarClock,
   CheckCircle2,
   Coffee,
+  Pencil,
   ShieldAlert,
+  Target,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Session } from "@/lib/engine/types";
 import type { AwayTrackerState } from "@/lib/hooks/use-away-tracker";
+import { useGoalProfile } from "@/lib/hooks/use-goal-profile";
+import { requestGoalEdit } from "@/lib/data/goals";
 import { buildRuns, interventionForRun } from "@/lib/engine/detection";
 import { daySummary } from "@/lib/engine/insights";
 import { predictRisk } from "@/lib/engine/predict";
@@ -52,17 +56,66 @@ export function OverviewTab({
     [sessions, todayStart],
   );
 
-  const todayActivity = useMemo(() => {
+const todayActivity = useMemo(() => {
     const durs = todayList.map((s) => Math.max(0, s.endAt - s.startAt));
     const total = durs.reduce((a, b) => a + b, 0);
     const longest = durs.length ? Math.max(...durs) : 0;
     const average = durs.length ? total / durs.length : 0;
-    const breaks = todayList.reduce((a, s) => a + (s.breaks ?? 0), 0);
+    const breaks = todayList.reduce((s, d) => s + (d.breaks ?? 0), 0);
     return { total, longest, average, breaks };
   }, [todayList]);
 
+  const profile = useGoalProfile();
+
   return (
     <div className="grid gap-5">
+      <Card>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-heading text-base font-semibold text-foreground">
+                {profile.monthName} goals
+              </h3>
+              <Pill className="bg-primary/10 text-primary">
+                {profile.name ? `Hi ${profile.name}` : "Not set"}
+              </Pill>
+            </div>
+            {profile.goals.length > 0 ? (
+              <ul className="mt-3 flex flex-col gap-1.5">
+                {profile.goals.map((goal, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start gap-2 text-sm text-foreground"
+                  >
+                    <Target
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
+                      aria-hidden="true"
+                    />
+                    <span>{goal}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">
+                No goals saved for this month yet — without them the AI can only
+                guess what you&apos;re aiming at.
+              </p>
+            )}
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+              These reset at the start of each month. The break questions mix
+              these with the general ones.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={requestGoalEdit}
+            className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+          >
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+            Edit
+          </button>
+        </div>
+      </Card>
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">

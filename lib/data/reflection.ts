@@ -1,3 +1,5 @@
+import { loadRecentPrompts, rememberPrompts } from "@/lib/data/goals";
+
 export type ReflectionQuestionId =
   | "intention"
   | "awareness"
@@ -5,7 +7,12 @@ export type ReflectionQuestionId =
   | "purpose"
   | "mood"
   | "next"
-  | "future";
+  | "future"
+  | "goal-align"
+  | "goal-swap"
+  | "goal-tradeoff"
+  | "goal-remind"
+  | "goal-habit";
 
 export interface ReflectionOption {
   label: string;
@@ -21,6 +28,14 @@ export interface ReflectionQuestion {
     hint: string;
     comparison: (plannedMin: number, actualMs: number) => string;
   };
+  /** The monthly goal this question was generated from, if any. */
+  goal?: string;
+}
+
+/** Personalisation context for goal-generated questions. */
+export interface GoalContext {
+  name?: string;
+  goals?: string[];
 }
 
 const actualMinLabel = (actualMs: number) =>
@@ -97,17 +112,168 @@ export const REFLECTION_QUESTIONS: ReflectionQuestion[] = [
   },
 ];
 
+function shuffled<T>(items: T[]): T[] {
+  const pool = [...items];
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool;
+}
+
+/** Goals are quoted, so the user's own wording survives into the question. */
+function quoteGoal(goal: string): string {
+  return `"${goal.replace(/["“”]/g, "").trim()}"`;
+}
+
+/**
+ * Builds the goal-aware half of the question bank from the current month's
+ * goals. Only the current month is ever passed in — nothing reads history here.
+ *
+ * Each goal gets several phrasings of the same idea so the bank doesn't feel
+ * like one sentence with the goal swapped in.
+ */
+export function buildGoalQuestions(ctx?: GoalContext): ReflectionQuestion[] {
+  const goals = (ctx?.goals ?? []).map((g) => g.trim()).filter(Boolean);
+  const name = ctx?.name?.trim();
+  if (goals.length === 0) return [];
+
+  const pickFrom = <T,>(options: T[]): T =>
+    options[Math.floor(Math.random() * options.length)];
+
+  const alignPrompts = (goal: string): string[] => [
+    `You said ${quoteGoal(goal)} is one of your goals this month. Is this scroll getting you closer to it, or pulling you away?`,
+    `Before you go back${name ? `, ${name}` : ""} — is scrolling right now helping with ${quoteGoal(goal)}, or getting in its way?`,
+    `Quick one: does this session move ${quoteGoal(goal)} forward, or hold it back?`,
+  ];
+  const swapPrompts = (goal: string): string[] => [
+    `What could you do in the next 15 minutes that moves ${quoteGoal(goal)} forward?`,
+    `If the next 15 minutes were yours to spend, what would you do for ${quoteGoal(goal)}?`,
+  ];
+  const tradeoffPrompts = (goal: string): string[] => [
+    `If you keep scrolling for another 30 minutes, will you be happy with the time that costs ${quoteGoal(goal)}?`,
+    `30 more minutes here is 30 minutes not spent on ${quoteGoal(goal)}. Okay with that?`,
+  ];
+
+  const questions: ReflectionQuestion[] = [];
+  // Spread across goals so one long goal can't crowd the bank out.
+  for (const goal of shuffled(goals).slice(0, 3)) {
+    questions.push({
+      id: "goal-align",
+      goal,
+      prompt: pickFrom(alignPrompts(goal)),
+      options: [
+        { label: "Getting closer", value: "closer" },
+        { label: "Pulling me away", value: "away" },
+        { label: "Honestly, not sure", value: "unsure" },
+      ],
+    });
+
+    if (Math.random() < 0.5) {
+      questions.push({
+        id: "goal-swap",
+        goal,
+        prompt: pickFrom(swapPrompts(goal)),
+        options: [
+          { label: "Start one small step", value: "start" },
+          { label: "Decide when I'll do it", value: "schedule" },
+          { label: "Something else right now", value: "other" },
+        ],
+      });
+    } else {
+      questions.push({
+        id: "goal-tradeoff",
+        goal,
+        prompt: pickFrom(tradeoffPrompts(goal)),
+        options: [
+          { label: "Yes, that's fine", value: "yes" },
+          { label: "No, I'd rather not", value: "no" },
+        ],
+      });
+    }
+  }
+
+  questions.push({
+    id: "goal-remind",
+    prompt: `${name ? `${name}, ` : ""}of your goals this month, which one is closest to done?`,
+    options: goals.slice(0, 5).map((goal, index) => ({
+      label: goal,
+      value: `g${index}`,
+    })),
+  });
+
+  if (name) {
+    questions.push({
+      id: "goal-habit",
+      prompt: pickFrom([
+        `Quick check-in, ${name}: are you scrolling because you chose to, or because you lost track of time?`,
+        `${name}, honest one — did you choose this scroll, or did it just happen to you?`,
+      ]),
+      options: [
+        { label: "I chose to", value: "chose" },
+        { label: "Habit", value: "habit" },
+        { label: "Not sure", value: "unsure" },
+      ],
+    });
+  }
+
+  return questions;
+}
+
+function takeRandom(pool: ReflectionQuestion[]): ReflectionQuestion | undefined {
+  if (pool.length === 0) return undefined;
+  return pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+}
+
+/**
+ * Draws at least `minQuestions` from the combined bank: the original questions
+ * plus the ones generated from this month's goals. Prompts asked recently are
+ * held back so the same thing doesn't land twice in a row.
+ */
 export function pickReflectionSession(
   minQuestions = 1,
   maxQuestions = 3,
+  ctx?: GoalContext,
 ): ReflectionQuestion[] {
-  const pool = [...REFLECTION_QUESTIONS];
-  const count = minQuestions + Math.floor(Math.random() * (maxQuestions - minQuestions + 1));
+  const goalQuestions = buildGoalQuestions(ctx);
+  const bank = [...REFLECTION_QUESTIONS, ...goalQuestions];
+  const recent = loadRecentPrompts();
+  // Hold back everything asked recently. `rememberPrompts` stores newest-first,
+  // so the head of the list is the most recent round.
+  //
+  // The holdback is capped at `bank.length - minQuestions`. That cap is what makes
+  // an aggressive holdback safe: a user with no goals has a bank of only seven
+  // original questions, so holding all of them would leave nothing to ask and
+  // `count` would silently land under the minimum. Bounding the holdback at
+  // `bank.length - minQuestions` guarantees the minimum is always serviceable
+  // while holding back everything whenever the bank is big enough to afford it.
+  const maxHoldBack = Math.max(0, bank.length - minQuestions);
+  const holdBack = recent.slice(0, maxHoldBack);
+  const unseen = bank.filter((q) => !holdBack.includes(q.prompt));
+  const pool = unseen.length > 0 ? [...unseen] : [...bank];
+
+  const span = Math.max(1, maxQuestions - minQuestions + 1);
+  const count = Math.min(
+    minQuestions + Math.floor(Math.random() * span),
+    pool.length,
+  );
   const picked: ReflectionQuestion[] = [];
-  for (let i = 0; i < count && pool.length > 0; i += 1) {
-    const idx = Math.floor(Math.random() * pool.length);
-    picked.push(pool.splice(idx, 1)[0]);
+
+  // When goals exist, lean on them — otherwise the personalisation is invisible.
+  if (goalQuestions.length > 0 && pool.length > 0 && Math.random() < 0.7) {
+    const freshGoal = goalQuestions.find((g) => !holdBack.includes(g.prompt));
+    const seed = freshGoal ?? goalQuestions[0];
+    const at = pool.findIndex((q) => q.prompt === seed.prompt);
+    if (at !== -1) picked.push(pool.splice(at, 1)[0]);
   }
+
+  while (picked.length < count) {
+    const next = takeRandom(pool);
+    if (!next) break;
+    picked.push(next);
+  }
+
+  rememberPrompts(picked.map((q) => q.prompt));
   return picked;
 }
 
@@ -119,12 +285,15 @@ export interface ReflectionLogEntry {
   questionId: ReflectionQuestionId;
   answer: string;
   actualMs: number;
+  /** The monthly goal behind a generated question, when there was one. */
+  goal?: string;
 }
 
 export function logReflectionAnswer(
   questionId: ReflectionQuestionId,
   answer: string,
   actualMs: number,
+  goal?: string,
 ): void {
   if (typeof localStorage === "undefined") return;
   try {
@@ -132,7 +301,7 @@ export function logReflectionAnswer(
     const log: ReflectionLogEntry[] = raw
       ? (JSON.parse(raw) as ReflectionLogEntry[])
       : [];
-    log.push({ at: Date.now(), questionId, answer, actualMs });
+    log.push({ at: Date.now(), questionId, answer, actualMs, goal });
     while (log.length > LOG_CAP) log.shift();
     localStorage.setItem(LOG_KEY, JSON.stringify(log));
   } catch {

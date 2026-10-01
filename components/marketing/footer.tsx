@@ -37,7 +37,7 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-[1.4fr_2fr]">
           <div className="flex flex-col gap-5">
             <a href="#top" aria-label="Scroll Detect home" className="inline-flex w-fit">
-              <Logo />
+              <Logo slogan="Scroll less, live more" />
             </a>
             <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
               An alarm you cannot snooze, and nothing else.

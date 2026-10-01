@@ -23,7 +23,7 @@ Everything about a user's browsing history stays out of the server. Sessions, in
 
 ```
 app/
-  (site)/               Landing page group (Hero → How it works → FAQ → CTA)
+  (site)/               Landing page group (Hero → How it works → Goals → FAQ → CTA)
     page.tsx            Homepage
     layout.tsx          Marketing chrome (navbar, footer, sticky install bar)
   app/page.tsx          The dashboard UI (the PWA), isolated from marketing chrome
@@ -34,18 +34,19 @@ app/
   manifest.ts           Web App Manifest
   icon.svg              Favicon / app icon (source of truth for scripts/gen-icons.js)
 components/
-  marketing/            Landing page (hero, countdown clock, navbar, footer, FAQ, CTAs…)
+  marketing/            Landing page (hero, navbar, footer, monthly goals, FAQ, CTAs…)
+  onboarding/           First-run gate: name + monthly goals, and the monthly review
   dashboard/            Dashboard UI (dashboard-client, timer-tab, per-tab views)
-  ui/                   Reusable primitives (button, card, accordion)
+  ui/                   Reusable primitives (button, accordion)
   providers/            Client-side providers (theme, service worker registration)
   logo.tsx              Brand marks — Logo, LogoMark, DoomPhoneMark
 lib/
   engine/               Detection, triggers, insights, predictions, coach, demo data (pure functions)
   audio/                Alarm engine (alarm.ts) and the softer chime cues (chime.ts)
-  data/                 Client-side persistence: session store, reflection prompts, imports
-  hooks/                use-break-timer, use-away-tracker, use-install-state
+  data/                 Client-side persistence: session store, reflection prompts, goal profile, imports
+  hooks/                use-break-timer, use-away-tracker, use-install-state, use-goal-profile
   ai/                   Server-only OpenAI-compatible client (env-configurable)
-  config/               site.ts — name, tagline, URL, used by layout + manifest
+  config/               site.ts — name, tagline, URL, nav, used by layout + manifest
   utils.ts              Shared helpers (cn)
 public/
   audio/                Break-over recordings (siren.mp3, screech.mp3)

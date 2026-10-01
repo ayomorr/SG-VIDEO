@@ -34,7 +34,7 @@ export function Navbar() {
             className="focus-visible:outline-2"
             aria-label="Scroll Detect home"
           >
-            <Logo iconClass="h-7 w-7" />
+            <Logo iconClass="h-7 w-7" slogan="Scroll less, live more" />
           </a>
 
           <ul className="hidden items-center gap-7 md:flex">

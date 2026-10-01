@@ -5,6 +5,7 @@ import { Send, ShieldAlert, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CoachMessage, Session } from "@/lib/engine/types";
 import { buildContextSummary } from "@/lib/engine/coach";
+import { useGoalProfile } from "@/lib/hooks/use-goal-profile";
 import { Card } from "@/components/dashboard/primitives";
 
 const QUICK_PROMPTS = [
@@ -13,6 +14,7 @@ const QUICK_PROMPTS = [
   "Why do I doomscroll?",
   "Help me sleep instead of scrolling",
   "I can't stop tonight",
+  "What should I do about my goals?",
 ];
 
 export function CoachTab({
@@ -26,6 +28,7 @@ export function CoachTab({
   const [input, setInput] = useState(initialMessage ?? "");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const profile = useGoalProfile();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -34,7 +37,15 @@ export function CoachTab({
     });
   }, [messages, loading]);
 
-  const context = useMemo(() => buildContextSummary(sessions), [sessions]);
+  const context = useMemo(
+    () => buildContextSummary(sessions, {
+      name: profile.name,
+      goals: profile.goals,
+      monthName: profile.monthName,
+    }),
+    // The profile is stable for a session; re-deriving on every goal edit is fine.
+    [sessions, profile.name, profile.goals, profile.monthName],
+  );
 
   const send = async (text: string) => {
     const content = text.trim();
@@ -53,6 +64,11 @@ export function CoachTab({
         body: JSON.stringify({
           messages: history.map((m) => ({ role: m.role, content: m.content })),
           context,
+          profile: {
+            name: profile.name,
+            goals: profile.goals,
+            monthName: profile.monthName,
+          },
         }),
       });
       const data = (await res.json()) as {
@@ -101,20 +117,31 @@ export function CoachTab({
               Accountability companion
             </p>
             <p className="text-xs text-muted-foreground">
-              Here to be honest with you, not bossy with you.
+              {profile.name
+                ? `Here for you, ${profile.name} — honest, not bossy.`
+                : "Here to be honest with you, not bossy with you."}
             </p>
           </div>
         </div>
 
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
           {messages.length === 0 ? (
-            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-              Hey — I can see your recent habits, so I&apos;ll reference what&apos;s
-              actually true for you. {context}{" "}
-              {sessions.length === 0
-                ? "Log a few sessions first so I have something real to work with."
-                : ""}
-            </p>
+            <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+              <p>
+                Hey{profile.name ? `, ${profile.name}` : ""} — I can see your
+                recent habits, so I&apos;ll reference what&apos;s actually true
+                for you. {context}{" "}
+                {sessions.length === 0
+                  ? "Log a few sessions first so I have something real to work with."
+                  : ""}
+              </p>
+              {profile.goals.length > 0 ? (
+                <p>
+                  I&apos;m also holding on to your {profile.monthName} goals, so
+                  ask me what to do about them.
+                </p>
+              ) : null}
+            </div>
           ) : null}
           {messages.map((m) => (
             <div
@@ -199,9 +226,10 @@ export function CoachTab({
           <div className="flex items-start gap-2">
             <ShieldAlert className="h-4 w-4 shrink-0 text-teal" aria-hidden="true" />
             <p className="text-xs leading-relaxed text-muted-foreground">
-              You&apos;re only sending a short summary of your habits and the
-              last 12 messages. Add <code className="text-foreground">AI_API_KEY</code>{" "}
-              to enable the full model instead of the built-in rules engine.
+              You&apos;re only sending a short summary of your habits, your
+              goals for the current month, and the last 12 messages. Add{" "}
+              <code className="text-foreground">AI_API_KEY</code> to enable the
+              full model instead of the built-in rules engine.
             </p>
           </div>
         </Card>

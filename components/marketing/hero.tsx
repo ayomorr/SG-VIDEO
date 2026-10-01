@@ -34,6 +34,12 @@ export function Hero() {
             first place.
           </p>
 
+          <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
+            It asks your name and what you want to finish this month first, so
+            those questions are about your goals instead of a generic lecture
+            about screen time.
+          </p>
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button asChild size="xl" variant="outline">
               <a href="/app">Open the app</a>

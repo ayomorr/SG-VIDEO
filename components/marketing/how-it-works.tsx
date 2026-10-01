@@ -17,10 +17,11 @@ const beats: { title: string; body: string; facts?: string[] }[] = [
   },
   {
     title: "Answer, and it stops",
-    body: "The alarm does not stop because you reached for it. It stops because you answered one to three questions drawn at random \u2014 one of them asks whether another 30 minutes is really okay. Then the timer resets and you are back to where you started.",
+    body: "The alarm does not stop because you reached for it. It stops because you answered at least four questions drawn at random — one of them asks whether another 30 minutes is really okay, and the rest are built from whatever you said you wanted to finish this month. Then the timer resets and you are back to where you started.",
     facts: [
-      "1\u20133 questions, drawn at random",
+      "4\u20135 questions, drawn at random",
       "\u201cWill you be okay with another 30 minutes?\u201d",
+      "Questions built from this month\u2019s goals",
       "Answers feed the pattern analysis",
       "No lock, no fullscreen, no forced pause",
     ],

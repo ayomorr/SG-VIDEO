@@ -14,11 +14,15 @@ const faqs = [
   },
   {
     q: "How do I make the alarm stop?",
-    a: "By answering the questions it raises when the break ends. One to three are drawn at random, and the pool includes \u201cIf you continue scrolling for another 30 minutes, will you be okay with that?\u201d and \u201cHow do you feel after this session?\u201d The alarm does not stop because you reached for it. It stops because you answered.",
+    a: "By answering the questions it raises when the break ends. Four or five are drawn at random, and the pool includes \u201cIf you continue scrolling for another 30 minutes, will you be okay with that?\u201d \u201cHow do you feel after this session?\u201d and questions built from this month\u2019s goals. The alarm does not stop because you reached for it. It stops because you answered.",
   },
   {
     q: "What if I close the tab, or my phone dies?",
     a: "The break is tracked against wall-clock time rather than a counter, so it still ends on schedule. If the tab was closed while the alarm was owed, it re-arms the moment you open the app again \u2014 the same way an alarm clock you ignored is still owed when you wake up.",
+  },
+  {
+    q: "What are the monthly goals for?",
+    a: "They make the questions specific. On first use it asks your name and one to five goals, then the questions at the end of a break are built out of those \u2014 \u201cYou said \u2018Complete my course\u2019 is one of your goals this month. Is this scroll getting you closer to it, or pulling you away?\u201d Goals reset with the calendar month, so it asks again rather than going stale, and the Overview tab has an edit button for whenever one stops being true.",
   },
   {
     q: "Can I turn the alarm down or off?",
