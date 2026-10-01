@@ -6,7 +6,7 @@ const columns = [
   {
     title: "Use it",
     links: [
-      { label: "Open the app", href: "/app" },
+      { label: "Add to home screen", href: "/app" },
       { label: "Add to home", href: "/#top" },
     ],
   },

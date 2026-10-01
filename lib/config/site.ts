@@ -5,7 +5,6 @@ export const siteConfig = {
   email: "hello@scrolldictive.app",
   nav: [
     { label: "How it works", href: "#how" },
-    { label: "Monthly goals", href: "#goals" },
     { label: "Questions", href: "#faq" },
   ],
 } as const;
